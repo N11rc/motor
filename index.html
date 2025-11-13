@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Moto Rota Hava Durumu - Akıllı Mobil UX</title>
+    <title>Moto Rota Hava Durumu - Akıllı Mobil UX (v6)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <link
@@ -39,22 +39,23 @@
             background: var(--color-bg);
             color: var(--color-text);
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column; /* Mobil için dikey hizalama varsayımı */
             gap: 10px;
-            align-items: flex-end; 
             z-index: 1000;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
             transition: max-height 0.3s ease-out, padding 0.3s ease-out;
-            max-height: 200px; /* Başlangıçta tam boy */
+            max-height: 250px; /* Başlangıçta tam boy (Daha fazla pay verdim) */
             overflow: hidden;
+            /* YATAY KAYMAYI ENGELLEME */
+            width: auto; 
+            box-sizing: border-box;
         }
 
         #controls.minimized {
-            max-height: 65px; /* Rota çizildikten sonra küçülür */
+            max-height: 65px; 
             padding-bottom: 5px;
         }
         
-        /* Kontrol elemanlarının görünürlüğü */
         #controls-inputs {
             display: flex;
             flex-wrap: wrap;
@@ -62,36 +63,52 @@
             flex-grow: 1;
             align-items: flex-end;
             transition: opacity 0.3s;
+            width: 100%; /* Mobil düzeltme: Tam genişlik */
+            box-sizing: border-box;
         }
 
         #controls.minimized #controls-inputs {
-            /* Küçülünce giriş alanlarını gizle */
             opacity: 0;
             pointer-events: none;
             height: 0;
+            margin-bottom: -10px; /* Alttaki boşluğu kaldır */
         }
 
         #controls label {
-            display: inline-flex;
+            display: flex;
             flex-direction: column;
             font-size: 13px;
             flex-grow: 1; 
             min-width: 140px; 
+            width: 100%; /* Mobil Düzeltme: Inputları tam genişlik yap */
             position: relative;
         }
 
-        /* Konum Butonu */
+        /* Mobil cihazlarda inputları tam genişlik yap */
+        @media (max-width: 768px) {
+            #controls label {
+                min-width: unset;
+                width: 100%;
+            }
+        }
+        
+        /* Konum Butonu - İçerideki pozisyon düzeltmesi */
         .location-button {
             position: absolute;
-            right: 5px;
+            right: 1px; /* Sağa yaklaştır */
             top: 50%;
             transform: translateY(calc( -50% + 8px));
             cursor: pointer;
-            color: #ccc;
+            color: var(--color-primary);
             background: none;
             border: none;
-            padding: 5px;
+            padding: 7px; /* Dokunma alanını büyüt */
             z-index: 2;
+            font-size: 16px;
+        }
+
+        .location-button:hover {
+            color: #ccc;
         }
         
         #controls input,
@@ -105,16 +122,18 @@
 
         #controls input {
             background: #222;
+            padding-right: 35px; /* Konum ikonu için boşluk */
         }
-        
-        /* Butonlar Grubu */
+
+        /* Butonlar Grubu - Mobil düzenleme */
         #controls-buttons {
              display: flex;
              gap: 10px;
+             width: 100%; /* Mobil düzeltme: Tam genişlik */
+             box-sizing: border-box;
         }
-
+        
         #routeBtn, #trackBtn, #settingsBtn {
-            background: var(--color-primary);
             color: white;
             cursor: pointer;
             border: none;
@@ -122,17 +141,31 @@
             white-space: nowrap; 
         }
         
-        #routeBtn, #trackBtn {
-            flex-grow: 1;
+        #routeBtn {
+            background: var(--color-primary);
+            flex-grow: 2; /* Rota butonu diğerlerinden daha geniş yer kaplasın */
+        }
+        
+        #trackBtn {
+            background: var(--color-primary);
+            flex-grow: 2;
         }
 
         #settingsBtn {
             background: #444;
-            flex-shrink: 0; /* Küçülmesini engeller */
+            flex-grow: 1; /* Settings butonu en az yeri kaplasın */
         }
         
+        #routeBtn:hover:not(:disabled), #trackBtn:hover:not(:disabled) {
+            background: #0d47a1;
+        }
         #settingsBtn:hover {
             background: #666 !important;
+        }
+
+        #controls button:disabled {
+            opacity: 0.6;
+            cursor: default;
         }
 
         #status-container {
@@ -154,7 +187,6 @@
         }
 
         /* --- LEAFLET KONTROL İYİLEŞTİRMELERİ --- */
-        /* Zoom butonlarını küçült ve mobilde sağ alt köşeye taşı */
         .leaflet-control-zoom {
             border-radius: 4px !important;
             box-shadow: 0 1px 5px rgba(0,0,0,0.4);
@@ -165,38 +197,22 @@
             line-height: 1.2 !important;
         }
         
+        /* Mobil: Zoom butonlarını sağ alta taşı */
         @media (max-width: 768px) {
-            /* Mobil: Zoom butonlarını sağ alta taşı */
             .leaflet-top.leaflet-left {
                 top: unset !important;
                 left: unset !important;
-                bottom: 100px !important; /* Legend ve Alt panel için boşluk */
+                bottom: 100px !important; 
                 right: 10px !important;
             }
             
-            /* Mobil: Kontrol elemanlarının tam genişliğe yayılması */
-            #controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            #controls-inputs {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            #controls label, #controls button {
-                min-width: unset;
-                width: 100%;
+            #controls.minimized {
+                max-height: 100px;
             }
             
             #controls-buttons {
-                width: 100%;
-            }
-            
-            /* Küçülmüş mobil görünümde, harita alanı genişler */
-            #controls.minimized {
-                max-height: 100px;
+                /* Mobil: Butonların yan yana, eşit aralıklarla sığmasını sağla */
+                justify-content: space-between;
             }
         }
         
@@ -207,10 +223,10 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             color: var(--color-text);
             z-index: 1001;
-            display: none; /* Başlangıçta gizli */
+            display: none; 
             padding: 20px;
             overflow-y: auto;
         }
@@ -239,7 +255,7 @@
         <div id="controls-inputs">
             <label>Başlangıç:
                 <input id="startInput" type="text" placeholder="Örn: Pendik, İstanbul" />
-                <button class="location-button" id="useStartLocBtn"><i class="fas fa-crosshairs"></i></button>
+                <button class="location-button" id="useStartLocBtn" title="Mevcut Konumumu Kullan"><i class="fas fa-crosshairs"></i></button>
             </label>
             <label>Bitiş:
                 <input id="endInput" type="text" placeholder="Örn: Milas, Muğla" />
@@ -267,7 +283,7 @@
         <div class="setting-group">
             <h3>Rota Parametreleri</h3>
             <p>Burada hava risk eşiklerini (Rüzgar Hızı, Yağış Miktarı) ve mola faktörlerini kişiselleştirebilirsiniz.</p>
-            </div>
+        </div>
         
         <div class="setting-group">
             <h3>Görünüm ve Harita</h3>
@@ -294,30 +310,26 @@
         const WARNING_WIND = 25; 
         const DANGER_PRECIP = 2; 
         const WARNING_PRECIP = 0.1; 
-        const MIN_SEGMENT_DISTANCE_KM = 10; // Her segment minimum bu mesafede olsun
-        const MIN_SAMPLE_COUNT = 10; // En kısa rotalar için bile minimum segment sayısı
+        const MIN_SEGMENT_DISTANCE_KM = 10; 
+        const MIN_SAMPLE_COUNT = 10; 
 
         // --- Haritayı başlat ---
-        const map = L.map("map", { zoomControl: false }); // Zoom kontrolünü devre dışı bırakıyoruz
+        const map = L.map("map", { zoomControl: false }); 
 
-        // Akıllı başlangıç konumu belirleme
         function setInitialMapView() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        // İzin verilirse: Mevcut konuma odaklan
                         map.setView([pos.coords.latitude, pos.coords.longitude], 10);
                         setStatus("Konumunuz bulundu, harita hazır.");
                     },
                     (err) => {
-                        // İzin verilmezse/hata olursa: Türkiye'nin ortasında daha yakın başla
                         map.setView([39.0, 35.0], 6); 
                         setStatus("Harita hazır. Başlangıç ve bitiş giriniz.");
                     },
                     { enableHighAccuracy: false, timeout: 5000 }
                 );
             } else {
-                // Konum servisi yoksa: Türkiye'nin ortasında daha yakın başla
                 map.setView([39.0, 35.0], 6); 
                 setStatus("Harita hazır. Başlangıç ve bitiş giriniz.");
             }
@@ -349,7 +361,7 @@
         const useStartLocBtn = document.getElementById("useStartLocBtn");
         const startInput = document.getElementById("startInput");
 
-        // Legend (Aynı kalır, sadece konum ayarlaması mobil için yapıldı)
+        // Legend (Konum: Sağ Alt)
         const legend = L.control({ position: "bottomright" });
         legend.onAdd = function () {
             const div = L.DomUtil.create("div", "legend");
@@ -373,7 +385,7 @@
             routeBtn.innerHTML = `<i class="fas ${icon}"></i> ${loading ? "Hesaplanıyor..." : "Rota Çiz"}`;
         }
         
-        // --- Yardımcı Fonksiyonlar ---
+        // --- Yardımcı Fonksiyonlar --- (geocode, reverseGeocode, getRoute, getLatLngCoords, getHourlyWeather, findNearestHourIndex aynı kalır)
         
         function getWeatherRisk(info) {
             const { precipitation, wind } = info;
@@ -407,7 +419,7 @@
         async function reverseGeocode(lat, lon) {
              const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
              const res = await fetch(url, { headers: { "Accept-Language": "tr" } });
-             if (!res.ok) return `${lat.toFixed(4)}, ${lon.toFixed(4)}`; // Adres bulunamazsa koordinat dön
+             if (!res.ok) return `${lat.toFixed(4)}, ${lon.toFixed(4)}`; 
              const data = await res.json();
              return data.display_name || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
         }
@@ -450,7 +462,6 @@
 
         // --- ANA ROTA İŞLEYİCİ ---
         async function handleRoute() {
-            // Kontrol panelini küçült (minimized)
             controlsEl.classList.add('minimized');
             
             const endInput = document.getElementById("endInput");
@@ -494,10 +505,10 @@
 
                 // 2) Rota
                 const route = await getRoute(start, end);
-                const totalDistanceMeters = route.distance; // Metre
+                const totalDistanceMeters = route.distance;
                 const totalDurationSec = route.duration;
                 
-                // 3) Dinamik Segment Sayısı Hesaplama (Yeni Mantık)
+                // 3) Dinamik Segment Sayısı Hesaplama
                 const requiredSegments = Math.ceil(totalDistanceMeters / (MIN_SEGMENT_DISTANCE_KM * 1000));
                 const sampleCount = Math.max(MIN_SAMPLE_COUNT, requiredSegments); 
 
@@ -534,7 +545,7 @@
                     // Marker (daire) oluştur
                     const markerColor = getRiskColor(risk);
                     const marker = L.circleMarker(currentCoords, {
-                        radius: 5, /* Marker küçültüldü */
+                        radius: 5, 
                         color: markerColor,
                         weight: 1,
                         fillColor: markerColor,
@@ -590,7 +601,7 @@
             }
         }
         
-        // --- KONUM KULLAN İŞLEYİCİ (Yeni Özellik) ---
+        // --- KONUM KULLAN İŞLEYİCİ ---
         useStartLocBtn.addEventListener('click', () => {
              if (!navigator.geolocation) {
                 alert('Tarayıcınız konum servislerini desteklemiyor.');
@@ -602,11 +613,9 @@
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const lat = pos.coords.latitude;
                 const lon = pos.coords.longitude;
-                // Reverse Geocode ile adresi bul ve input'a yaz
                 const address = await reverseGeocode(lat, lon);
                 startInput.value = address;
                 
-                // Haritayı bu konuma taşı ve geçici bir marker koy
                 map.setView([lat, lon], 12);
                 L.marker([lat, lon], {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]})}).addTo(routeLayerGroup).bindPopup("Başlangıç Konumunuz").openPopup();
 
@@ -622,9 +631,8 @@
             });
         });
         
-        // --- KONUM TAKİBİ İŞLEYİCİ --- (Aynı kalır)
+        // --- KONUM TAKİBİ İŞLEYİCİ ---
         function toggleGeolocation() {
-            // [Konum takibi kodu, önceki versiyondan buraya gelecektir.]
              if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
