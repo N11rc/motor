@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Moto Rota Hava Durumu - POI (İlgi Çekici Noktalar) Eklendi (v12)</title>
+    <title>Moto Rota Hava Durumu - Mobil Uyumluluk Düzeltmesi (v13)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <link
@@ -16,7 +16,16 @@
     <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
     <style>
-        /* CSS Kodları */
+        /* CRITICAL: Mobil Uyum için HTML/BODY ayarları */
+        html, body {
+            height: 100%; /* Mutlak yükseklik */
+            width: 100%;  /* Mutlak genişlik */
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            overflow: hidden; 
+        }
+
         :root {
             --color-bg: #111;
             --color-text: #eee;
@@ -24,17 +33,12 @@
             --color-danger: #f44336;
             --color-warning: #ff9800;
             --color-success: #4caf50;
-            --color-info: #00bcd4; /* POI Rengi */
+            --color-info: #00bcd4;
         }
 
-        body {
-            margin: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            overflow: hidden; 
-        }
-        
         * { box-sizing: border-box; }
 
+        /* KONTROL ÇUBUĞU */
         #controls {
             position: absolute; top: 0; left: 0; right: 0; padding: 10px; background: var(--color-bg);
             color: var(--color-text); display: flex; flex-direction: column; gap: 10px; z-index: 1000;
@@ -43,11 +47,7 @@
             max-height: 250px; overflow: hidden; width: 100%; 
         }
 
-        /* Rotadan sonra kontrol çubuğu gizlenmeyecek, sadece inputlar gizlenecek */
-        #controls.minimized { 
-            max-height: 100px; 
-            padding-bottom: 5px; 
-        } 
+        #controls.minimized { max-height: 100px; padding-bottom: 5px; } 
         
         #controls-inputs {
             display: flex; flex-wrap: wrap; gap: 10px; flex-grow: 1; align-items: flex-end;
@@ -101,10 +101,17 @@
         }
         #controls.minimized #clearBtn { display: inline-block; }
 
-        /* Harita Kontrol Butonları (Sağ Üst) */
+        /* HARİTA GÖRÜNÜMÜ - KRİTİK DÜZELTME */
+        #map { 
+            width: 100%; 
+            height: 100%; /* Sayfanın tamamını kapla */
+            position: relative; /* Safari/Opera/Mobil için zorunlu */
+            z-index: 1; 
+        }
+
+        /* SAĞ ÜST KONTROL BUTONLARI */
         #mapToggleBtn, #poiControls {
             position: absolute;
-            top: 10px;
             right: 10px;
             z-index: 999;
             background: rgba(17, 17, 17, 0.8);
@@ -118,12 +125,20 @@
             flex-direction: column;
             gap: 8px;
         }
-        #mapToggleBtn { top: 10px; }
-        #poiControls { 
-            top: 60px; /* mapToggleBtn altından başla */
-            display: none; /* Başlangıçta gizli */
-            padding: 10px 15px;
+        
+        /* Mobil Cihazlar İçin Pozisyon Ayarı */
+        @media (max-width: 768px) {
+            /* Üst Kontrol Çubuğunun minimum yüksekliği yaklaşık 100px */
+            #mapToggleBtn { top: 110px; } /* Üst çubuğun altına it */
+            #poiControls { top: 160px; } /* Map Toggle'ın altına it */
+            .leaflet-top.leaflet-right { top: 250px !important; } /* Leaflet zoom kontrolünü daha da aşağı it */
         }
+        @media (min-width: 769px) {
+             #mapToggleBtn { top: 10px; } 
+             #poiControls { top: 60px; }
+        }
+
+
         .poi-button {
             background: #333;
             color: white;
@@ -141,18 +156,14 @@
             border-color: var(--color-info); 
         }
 
+        #poiControls { display: none; padding: 10px 15px; } /* Başlangıçta gizli */
+
+        /* Geri kalan CSS (Legend, Modal vs.) aynı kalır */
         #status-container { width: 100%; padding: 5px 0 0; display: flex; align-items: center; }
         #status { font-size: 13px; color: #ccc; flex-grow: 1; }
-        #map { width: 100%; height: 100vh; }
-
-        @media (max-width: 768px) {
-            .leaflet-top.leaflet-right { top: 120px !important; } 
-            #mapToggleBtn { top: 70px; right: 10px; }
-            #poiControls { top: 120px; right: 10px; }
-        }
+        .leaflet-control-zoom { border-radius: 4px !important; box-shadow: 0 1px 5px rgba(0,0,0,0.4); }
+        .leaflet-control-zoom-in, .leaflet-control-zoom-out { font-size: 18px !important; padding: 5px 8px !important; line-height: 1.2 !important; }
         
-        /* Geri kalan CSS (Legend, Modal vs.) aynı kalır */
-        /* --- AYARLAR MODAL STİLİ --- */
         #settingsModal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.95);
             color: var(--color-text); z-index: 1001; display: none; padding: 20px; overflow-y: auto; box-sizing: border-box;
@@ -175,7 +186,6 @@
             padding: 5px; border-radius: 4px; text-align: right;
         }
         
-        /* Toggle Switch Stili */
         .switch {
             position: relative; display: inline-block; width: 40px; height: 24px;
         }
@@ -192,7 +202,6 @@
         input:focus + .slider { box-shadow: 0 0 1px var(--color-success); }
         input:checked + .slider:before { transform: translateX(16px); }
 
-        /* Import/Export Stilleri */
         .file-controls {
             display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
         }
@@ -239,7 +248,7 @@
         <div style="color:#ccc; font-size:12px; font-weight:bold; margin-bottom:5px;">İLGİ ÇEKİCİ NOKTALAR</div>
         <button id="poiFuelBtn" class="poi-button" data-poi-type="fuel"><i class="fas fa-gas-pump"></i> Benzin İstasyonları</button>
         <button id="poiLodgingBtn" class="poi-button" data-poi-type="lodging"><i class="fas fa-bed"></i> Konaklama Yerleri</button>
-        </div>
+    </div>
     
     <div id="settingsModal">
         <div class="close-button" id="closeSettingsBtn">&times;</div>
@@ -315,7 +324,7 @@
         
         const MIN_SEGMENT_DISTANCE_KM = 10; 
         const MIN_SAMPLE_COUNT = 10; 
-        const POI_SEARCH_BUFFER_KM = 2; // Rota etrafındaki arama mesafesi (kilometre)
+        const POI_SEARCH_BUFFER_KM = 2; 
 
         // --- Global Değişkenler ---
         let lastRouteGeoJSON = null; 
@@ -341,7 +350,6 @@
         // --- Haritayı başlat ---
         const map = L.map("map", { zoomControl: false, layers: [osmLayer] }); 
         importedRouteLayer.addTo(map); 
-        // POI Katmanlarını da haritaya ekle (ancak başlangıçta görünmezler)
         Object.values(poiLayerGroups).forEach(layer => layer.addTo(map));
 
 
@@ -351,13 +359,12 @@
         const routeLayerGroup = L.layerGroup().addTo(map);
         const weatherLayerGroup = L.layerGroup().addTo(map);
         
-        const poiControlsEl = document.getElementById('poiControls'); // Yeni POI paneli
+        const poiControlsEl = document.getElementById('poiControls'); 
         const poiButtons = {
             fuel: document.getElementById('poiFuelBtn'),
             lodging: document.getElementById('poiLodgingBtn')
         };
         
-        // Diğer DOM Elemanları (Aynı kalır)
         const warnWindInput = document.getElementById('warnWind');
         const dangerWindInput = document.getElementById('dangerWind');
         const warnPrecipInput = document.getElementById('warnPrecip');
@@ -380,7 +387,7 @@
         let watchId = null; 
 
 
-        // --- YEREL DEPOLAMA ve İLK YÜKLEME (Aynı kalır) ---
+        // --- YEREL DEPOLAMA ve İLK YÜKLEME ---
         function loadSettings() {
             const settings = JSON.parse(localStorage.getItem('motoAppSettings'));
             if (settings) {
@@ -409,7 +416,6 @@
             updateExportButtons();
         }
         
-        // [Diğer yardımcı fonksiyonlar: saveSettings, updateExportButtons, updateLegend, fillSettingsInputs, setInitialMapView]
         function saveSettings() {
             const settings = {
                 warnWind: WARNING_WIND,
@@ -425,7 +431,6 @@
             const isDisabled = lastRouteGeoJSON === null;
             exportGPXBtn.disabled = isDisabled;
             exportKMLBtn.disabled = isDisabled;
-            // Rota yoksa POI kontrol panelini gizle
             poiControlsEl.style.display = isDisabled ? 'none' : 'flex';
         }
 
@@ -481,7 +486,7 @@
         
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // --- Harita Katman Geçişi (Aynı kalır) ---
+        // --- Harita Katman Geçişi ---
         function toggleMapLayer() {
             if (currentMapType === 'osm') {
                 map.removeLayer(osmLayer);
@@ -497,17 +502,11 @@
         }
         document.getElementById('mapToggleBtn').addEventListener('click', toggleMapLayer);
 
-        // --- POI ARAMA İŞLEVLERİ (YENİ) ---
-        
-        /**
-         * Verilen POI tipi için Overpass API sorgusu oluşturur.
-         */
+        // --- POI ARAMA İŞLEVLERİ (Aynı kalır) ---
         function buildOverpassQuery(poiType, routeGeoJSON, bufferKm) {
             if (!routeGeoJSON || !routeGeoJSON.features || routeGeoJSON.features.length === 0) return null;
 
             const coords = routeGeoJSON.features[0].geometry.coordinates;
-            // Rota üzerindeki her bir noktayı alıp bir tampon bölge (buffer) oluşturmak için
-            // Çok fazla nokta göndermemek için her 10. noktayı alalım.
             const points = coords.filter((_, i) => i % 10 === 0 || i === coords.length - 1);
 
             let query = `[out:json][timeout:30];\n`;
@@ -515,33 +514,26 @@
             let osmKeys;
             switch(poiType) {
                 case 'fuel':
-                    // Benzin istasyonları (fuel)
                     osmKeys = `node["amenity"="fuel"](around:${bufferKm * 1000}, {lat}, {lon});\n`;
                     break;
                 case 'lodging':
-                    // Oteller/Moteller/Pansiyonlar (tourism/lodging)
                     osmKeys = `node["tourism"~"hotel|motel|guest_house|hostel"](around:${bufferKm * 1000}, {lat}, {lon});\n`;
                     break;
                 default:
                     return null;
             }
 
-            // Rota üzerindeki her nokta etrafında arama yap
             points.forEach(c => {
                 const lon = c[0];
                 const lat = c[1];
                 query += osmKeys.replace(/{lat}/g, lat).replace(/{lon}/g, lon);
             });
             
-            // Sonuçları birleştirip çıktı al
             query += `out center;`;
             
             return query;
         }
 
-        /**
-         * Overpass API'den POI'leri çeker ve haritada gösterir.
-         */
         async function fetchAndDisplayPOIs(poiType) {
             if (!lastRouteGeoJSON) {
                 setStatus("Önce bir rota çizmelisiniz.");
@@ -551,7 +543,6 @@
 
             const layerGroup = poiLayerGroups[poiType];
             
-            // Eğer katman zaten açıksa, kapat ve temizle
             if (layerGroup.getLayers().length > 0) {
                  layerGroup.clearLayers();
                  setStatus(`${poiType} POI'leri haritadan kaldırıldı.`);
@@ -578,7 +569,6 @@
                 
                 const data = await response.json();
                 
-                // POI ikonu ayarla
                 let iconName, iconColor;
                 switch(poiType) {
                     case 'fuel':
@@ -610,7 +600,7 @@
                         const type = el.tags.amenity || el.tags.tourism || poiType;
 
                         L.marker([lat, lon], { icon: poiIcon })
-                            .bindPopup(`<b>${name}</b><br/>Tip: ${type}<br/><a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank">Google Haritalar'da Aç</a>`)
+                            .bindPopup(`<b>${name}</b><br/>Tip: ${type}<br/><a href="https://maps.google.com/maps?q=${lat},${lon}" target="_blank">Google Haritalar'da Aç</a>`)
                             .addTo(layerGroup);
                         count++;
                     }
@@ -624,27 +614,18 @@
             }
         }
         
-        // POI butonları için olay dinleyicileri
         Object.keys(poiButtons).forEach(poiType => {
             poiButtons[poiType].addEventListener('click', async () => {
                 const btn = poiButtons[poiType];
                 
                 if (btn.classList.contains('active')) {
-                    // Kapat
                     poiLayerGroups[poiType].clearLayers();
                     btn.classList.remove('active');
                     setStatus(`${poiType} POI'leri kapatıldı.`);
                 } else {
-                    // Aç
                     btn.classList.add('active');
-                    // Önceki POI'leri kaldır (Sadece bir POI türü gösterilsin isteniyorsa)
-                    // Object.keys(poiButtons).filter(k => k !== poiType).forEach(k => {
-                    //     poiLayerGroups[k].clearLayers();
-                    //     poiButtons[k].classList.remove('active');
-                    // });
                     await fetchAndDisplayPOIs(poiType);
                     
-                    // Arama sonucunda bir hata oluşursa ve katman boşsa, butonu kapat
                     if (poiLayerGroups[poiType].getLayers().length === 0) {
                         btn.classList.remove('active');
                     }
@@ -652,13 +633,12 @@
             });
         });
 
-        // --- TEMİZLEME İŞLEVİ (Güncellendi) ---
+        // --- TEMİZLEME İŞLEVİ ---
         function clearMapAndResetControls() {
             routeLayerGroup.clearLayers();
             weatherLayerGroup.clearLayers();
             importedRouteLayer.clearLayers();
             
-            // POI katmanlarını ve butonlarını temizle
             Object.values(poiLayerGroups).forEach(layer => layer.clearLayers());
             Object.values(poiButtons).forEach(btn => btn.classList.remove('active'));
             poiControlsEl.style.display = 'none';
@@ -677,7 +657,7 @@
         clearBtn.addEventListener('click', clearMapAndResetControls);
 
 
-        // [Geri kalan fonksiyonlar (geocode, getRoute, getHourlyWeather, handleRoute, exportRoute vs.) aynı kalır]
+        // --- DİĞER FONKSİYONLAR (Aynı kalır) ---
         function setStatus(msg) { statusEl.textContent = msg || ""; }
         function setLoading(loading) {
             routeBtn.disabled = loading;
@@ -926,7 +906,7 @@
             const newWarnWind = parseFloat(warnWindInput.value);
             const newDangerWind = parseFloat(dangerWindInput.value);
             const newWarnPrecip = parseFloat(warnPrecipInput.value);
-            const newDangerPrecip = parseFloat(warnPrecipInput.value);
+            const newDangerPrecip = parseFloat(dangerPrecipInput.value);
             SHOULD_SAVE_ROUTE = saveRouteToggle.checked;
             if (!isNaN(newWarnWind) && newWarnWind > 0) WARNING_WIND = newWarnWind;
             if (!isNaN(newDangerWind) && newDangerWind > 0) DANGER_WIND = newDangerWind;
@@ -1001,13 +981,12 @@
             }
         }
         
-        // --- Diğer Event Dinleyicileri (Aynı kalır) ---
+        // --- Event Dinleyicileri ---
         routeBtn.addEventListener("click", handleRoute);
         trackBtn.addEventListener("click", toggleGeolocation);
         settingsBtn.addEventListener('click', () => { fillSettingsInputs(); settingsModal.style.display = 'block'; });
         closeSettingsBtn.addEventListener('click', updateSettingsAndClose);
         
-        // ... (useStartLocBtn ve diğer event dinleyicileri)
         useStartLocBtn.addEventListener('click', () => {
              if (!navigator.geolocation) { alert('Tarayıcınız konum servislerini desteklemiyor.'); return; }
             setStatus("Konumunuz alınıyor...");
