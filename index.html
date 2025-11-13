@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Moto Rota Hava Durumu - Ayarlar Aktif (v8)</title>
+    <title>Moto Rota Hava Durumu - Kayıt Kontrolü ve GPX Desteği (v9)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <link
@@ -12,6 +12,8 @@
         crossorigin=""
     />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://unpkg.com/@mapbox/togeojson@0.16.0/togeojson.js"></script>
+    <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
     <style>
         :root {
@@ -29,11 +31,9 @@
             overflow: hidden; 
         }
         
-        * {
-            box-sizing: border-box; 
-        }
+        * { box-sizing: border-box; }
 
-        /* --- ANA KONTROL PANELİ STİLİ --- */
+        /* ... KONTROL PANELİ STİLLERİ AYNEN KALIR ... */
         #controls {
             position: absolute;
             top: 0;
@@ -53,198 +53,106 @@
             width: 100%; 
         }
 
-        #controls.minimized {
-            max-height: 65px; 
-            padding-bottom: 5px;
-        }
-        
+        #controls.minimized { max-height: 65px; padding-bottom: 5px; }
         #controls-inputs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            flex-grow: 1;
-            align-items: flex-end;
-            transition: opacity 0.3s;
-            width: 100%; 
+            display: flex; flex-wrap: wrap; gap: 10px; flex-grow: 1; align-items: flex-end;
+            transition: opacity 0.3s; width: 100%; 
         }
-
-        #controls.minimized #controls-inputs {
-            opacity: 0;
-            pointer-events: none;
-            height: 0;
-            margin-bottom: -10px; 
-        }
+        #controls.minimized #controls-inputs { opacity: 0; pointer-events: none; height: 0; margin-bottom: -10px; }
 
         #controls label {
-            display: flex;
-            flex-direction: column;
-            font-size: 13px;
-            flex-grow: 1; 
-            min-width: 140px; 
-            position: relative;
+            display: flex; flex-direction: column; font-size: 13px; flex-grow: 1; min-width: 140px; position: relative;
         }
-        
         @media (max-width: 768px) {
-            #controls label,
-            #controls-inputs {
-                width: 100%;
-            }
-            #controls label {
-                min-width: unset;
-            }
+            #controls label, #controls-inputs { width: 100%; }
+            #controls label { min-width: unset; }
         }
         
         .location-button {
-            position: absolute;
-            right: 1px; 
-            top: 50%;
-            transform: translateY(calc( -50% + 8px));
-            cursor: pointer;
-            color: var(--color-primary);
-            background: none;
-            border: none;
-            padding: 7px; 
-            z-index: 2;
-            font-size: 16px;
+            position: absolute; right: 1px; top: 50%; transform: translateY(calc( -50% + 8px)); cursor: pointer;
+            color: var(--color-primary); background: none; border: none; padding: 7px; z-index: 2; font-size: 16px;
         }
 
-        #controls input {
-            background: #222;
-            padding-right: 35px; 
-            width: 100%; 
-        }
-
-        #controls-buttons {
-             display: flex;
-             gap: 10px;
-             width: 100%; 
-        }
+        #controls input { background: #222; padding-right: 35px; width: 100%; }
+        #controls-buttons { display: flex; gap: 10px; width: 100%; }
         
         #routeBtn, #trackBtn, #settingsBtn {
-            padding: 8px 10px;
-            font-size: 14px;
-            border-radius: 4px;
-            border: none;
-            color: white;
-            cursor: pointer;
-            transition: background 0.2s;
-            white-space: nowrap; 
+            padding: 8px 10px; font-size: 14px; border-radius: 4px; border: none; color: white; cursor: pointer;
+            transition: background 0.2s; white-space: nowrap; 
         }
         
         #routeBtn { background: var(--color-primary); flex-grow: 2; }
         #trackBtn { background: var(--color-primary); flex-grow: 2; }
         #settingsBtn { background: #444; flex-grow: 1; }
         
-        #status-container {
-            width: 100%;
-            padding: 5px 0 0;
-            display: flex;
-            align-items: center;
-        }
-        
-        #status {
-            font-size: 13px;
-            color: #ccc;
-            flex-grow: 1;
-        }
+        #status-container { width: 100%; padding: 5px 0 0; display: flex; align-items: center; }
+        #status { font-size: 13px; color: #ccc; flex-grow: 1; }
+        #map { width: 100%; height: 100vh; }
 
-        #map {
-            width: 100%;
-            height: 100vh;
-        }
-
-        /* --- LEAFLET KONTROL İYİLEŞTİRMELERİ (MOBİL ALT MENÜ FIX) --- */
-        .leaflet-control-zoom {
-            border-radius: 4px !important;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-        }
-        .leaflet-control-zoom-in, .leaflet-control-zoom-out {
-            font-size: 18px !important;
-            padding: 5px 8px !important;
-            line-height: 1.2 !important;
-        }
+        /* LEAFLET KONTROL STİLLERİ AYNEN KALIR */
+        .leaflet-control-zoom { border-radius: 4px !important; box-shadow: 0 1px 5px rgba(0,0,0,0.4); }
+        .leaflet-control-zoom-in, .leaflet-control-zoom-out { font-size: 18px !important; padding: 5px 8px !important; line-height: 1.2 !important; }
         
         @media (max-width: 768px) {
-            /* Zoom Butonlarını YUKARI KAYDIR (Tarayıcı alt menüsünden kurtulmak için) */
-            .leaflet-top.leaflet-left {
-                top: unset !important;
-                left: unset !important;
-                bottom: 120px !important; /* Eskiden 100'dü, daha fazla pay bırakıyoruz */
-                right: 10px !important;
-            }
-            /* Legend'ı da yukarı kaydır */
-            .leaflet-bottom.leaflet-right {
-                bottom: 60px !important; /* Alt menüden kaçış */
-            }
-            
-            #controls.minimized {
-                max-height: 100px;
-            }
-            
-            #controls-buttons {
-                justify-content: space-between;
-            }
+            .leaflet-top.leaflet-left { top: unset !important; left: unset !important; bottom: 120px !important; right: 10px !important; }
+            .leaflet-bottom.leaflet-right { bottom: 60px !important; }
+            #controls.minimized { max-height: 100px; }
+            #controls-buttons { justify-content: space-between; }
         }
         
         /* --- AYARLAR MODAL STİLİ --- */
         #settingsModal {
-            position: fixed; 
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            color: var(--color-text);
-            z-index: 1001;
-            display: none; 
-            padding: 20px;
-            overflow-y: auto;
-            box-sizing: border-box;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.95);
+            color: var(--color-text); z-index: 1001; display: none; padding: 20px; overflow-y: auto; box-sizing: border-box;
         }
         
-        #settingsModal h2 {
-            border-bottom: 1px solid #444;
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-        
-        #settingsModal .close-button {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: 24px;
-            cursor: pointer;
-        }
+        #settingsModal h2 { border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; }
+        #settingsModal .close-button { position: absolute; top: 10px; right: 20px; font-size: 24px; cursor: pointer; }
         
         .setting-group {
-            margin-bottom: 25px;
-            padding: 10px;
-            background: #222;
-            border-radius: 8px;
+            margin-bottom: 25px; padding: 10px; background: #222; border-radius: 8px;
         }
 
         .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px dashed #333;
+            display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #333;
         }
-        .setting-item:last-child {
-            border-bottom: none;
-        }
-        .setting-item label {
-            flex-grow: 1;
-        }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-item label { flex-grow: 1; }
         .setting-item input[type="number"] {
-            width: 70px;
-            background: #333;
-            border: none;
-            color: var(--color-text);
-            padding: 5px;
-            border-radius: 4px;
-            text-align: right;
+            width: 70px; background: #333; border: none; color: var(--color-text);
+            padding: 5px; border-radius: 4px; text-align: right;
         }
+        
+        /* Toggle Switch Stili */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--color-success); }
+        input:focus + .slider { box-shadow: 0 0 1px var(--color-success); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        /* Import/Export Stilleri */
+        .file-controls {
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+        }
+        .file-controls input[type="file"] { display: none; }
+        .file-controls button {
+            background: #555; color: white; padding: 8px 15px; border: none; border-radius: 4px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .file-controls button:hover { background: #777; }
     </style>
 </head>
 <body>
@@ -278,6 +186,17 @@
         <h2><i class="fas fa-cog"></i> Uygulama Ayarları</h2>
         
         <div class="setting-group">
+            <h3><i class="fas fa-database"></i> Veri Yönetimi</h3>
+            <div class="setting-item">
+                <label for="saveRouteToggle">Rota Verilerini Cihazımda Kaydet (Son Rotayı Hatırla)</label>
+                <label class="switch">
+                    <input type="checkbox" id="saveRouteToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="setting-group">
             <h3>Rota Parametreleri (Risk Eşikleri)</h3>
             <div class="setting-item">
                 <label for="warnWind">Orta Risk Rüzgar Hızı (km/s):</label>
@@ -295,18 +214,27 @@
                 <label for="dangerPrecip">Yüksek Risk Yağış (mm/saat):</label>
                 <input type="number" id="dangerPrecip" step="0.1" min="0" max="10" />
             </div>
-            <p style="font-size:12px; margin-top: 15px; color: #aaa;">Ayarları değiştirdikten sonra kapat tuşuna basıp yeni bir rota çizin.</p>
         </div>
         
         <div class="setting-group">
-            <h3>Görünüm ve Harita (Yakında)</h3>
-            <p>Harita teması (Gece/Gündüz) ve POI (Benzin, Kamp Alanı) ayarları buraya gelecek.</p>
+            <h3><i class="fas fa-exchange-alt"></i> Rota İçe/Dışa Aktarma (GPX/KML)</h3>
+            <div style="margin-bottom: 15px;">
+                <label for="importFile" style="font-size: 14px; margin-bottom: 5px; display: block;">GPX/KML Dosyası İçe Aktar:</label>
+                <div class="file-controls">
+                    <input type="file" id="importFile" accept=".gpx, .kml" />
+                    <button onclick="document.getElementById('importFile').click()"><i class="fas fa-upload"></i> Dosya Seç</button>
+                    <button id="importBtn" disabled><i class="fas fa-map-marked-alt"></i> Haritada Göster</button>
+                </div>
+            </div>
+            <div>
+                <label style="font-size: 14px; margin-bottom: 5px; display: block;">Son Çizilen Rotayı Dışa Aktar:</label>
+                <div class="file-controls">
+                    <button id="exportGPXBtn" disabled><i class="fas fa-file-export"></i> GPX Olarak İndir</button>
+                    <button id="exportKMLBtn" disabled><i class="fas fa-file-export"></i> KML Olarak İndir</button>
+                </div>
+            </div>
         </div>
         
-        <div class="setting-group">
-            <h3>Veri ve Geçmiş (Yakında)</h3>
-            <p>Son rotalarınız ve tercihlerinizi yönetme seçenekleri buraya gelecek.</p>
-        </div>
     </div>
     
     <div id="map"></div>
@@ -323,12 +251,17 @@
         let WARNING_WIND = 25; 
         let DANGER_PRECIP = 2; 
         let WARNING_PRECIP = 0.1; 
+        let SHOULD_SAVE_ROUTE = false; // Yeni toggle değişkeni (Varsayılan: Kapalı)
         
         const MIN_SEGMENT_DISTANCE_KM = 10; 
         const MIN_SAMPLE_COUNT = 10; 
 
-        // --- Haritayı başlat & Legend Güncelleme ---
-        
+        // --- Global Değişkenler ---
+        let lastRouteGeoJSON = null; // Son çizilen rotayı tutacak
+        let importedRouteLayer = L.layerGroup(); // İçe aktarılan rotayı tutacak katman
+        importedRouteLayer.addTo(map);
+
+        // --- DOM Elementleri ---
         const map = L.map("map", { zoomControl: false }); 
         let customLegend = null; 
         
@@ -336,8 +269,54 @@
         const dangerWindInput = document.getElementById('dangerWind');
         const warnPrecipInput = document.getElementById('warnPrecip');
         const dangerPrecipInput = document.getElementById('dangerPrecip');
+        const saveRouteToggle = document.getElementById('saveRouteToggle');
+        
+        const exportGPXBtn = document.getElementById('exportGPXBtn');
+        const exportKMLBtn = document.getElementById('exportKMLBtn');
+        const importFile = document.getElementById('importFile');
+        const importBtn = document.getElementById('importBtn');
 
+        // --- YEREL DEPOLAMA (SADECE AYARLAR İÇİN) ---
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('motoAppSettings'));
+            if (settings) {
+                DANGER_WIND = settings.dangerWind || DANGER_WIND;
+                WARNING_WIND = settings.warnWind || WARNING_WIND;
+                DANGER_PRECIP = settings.dangerPrecip || DANGER_PRECIP;
+                WARNING_PRECIP = settings.warnPrecip || WARNING_PRECIP;
+                SHOULD_SAVE_ROUTE = settings.shouldSaveRoute || false;
+            }
+            
+            fillSettingsInputs();
+            
+            if (SHOULD_SAVE_ROUTE) {
+                const lastRoute = localStorage.getItem('lastRouteGeoJSON');
+                if (lastRoute) {
+                    lastRouteGeoJSON = JSON.parse(lastRoute);
+                    setStatus("Önceki rota verisi yüklendi. Tekrar çizmek için Başlangıç/Bitiş'i kullanın.");
+                }
+            }
+            updateExportButtons();
+        }
+        
+        function saveSettings() {
+            const settings = {
+                warnWind: WARNING_WIND,
+                dangerWind: DANGER_WIND,
+                warnPrecip: WARNING_PRECIP,
+                dangerPrecip: DANGER_PRECIP,
+                shouldSaveRoute: SHOULD_SAVE_ROUTE 
+            };
+            localStorage.setItem('motoAppSettings', JSON.stringify(settings));
+        }
 
+        function updateExportButtons() {
+            const isDisabled = lastRouteGeoJSON === null;
+            exportGPXBtn.disabled = isDisabled;
+            exportKMLBtn.disabled = isDisabled;
+        }
+
+        // --- Ayarlar ve Harita Fonksiyonları (Aynı kalır) ---
         function updateLegend() {
             if (customLegend) {
                 map.removeControl(customLegend);
@@ -357,17 +336,17 @@
             customLegend.addTo(map);
         }
 
-        // Ayar inputlarının varsayılan değerlerle doldurulması
         function fillSettingsInputs() {
             warnWindInput.value = WARNING_WIND;
             dangerWindInput.value = DANGER_WIND;
             warnPrecipInput.value = WARNING_PRECIP;
             dangerPrecipInput.value = DANGER_PRECIP;
+            saveRouteToggle.checked = SHOULD_SAVE_ROUTE;
         }
 
         function setInitialMapView() {
-            // ... (Aynı kalır)
             if (navigator.geolocation) {
+                // ... (Konum kodu)
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
                         map.setView([pos.coords.latitude, pos.coords.longitude], 10);
@@ -390,12 +369,11 @@
             attribution: '&copy; OSM & OSRM & Open-Meteo',
         }).addTo(map);
 
-        fillSettingsInputs(); // Inputları varsayılan değerlerle doldur
+        loadSettings(); 
         setInitialMapView();
         updateLegend(); 
         
         L.control.zoom({ position: 'bottomright' }).addTo(map);
-
 
         const routeLayerGroup = L.layerGroup().addTo(map);
         const weatherLayerGroup = L.layerGroup().addTo(map);
@@ -423,18 +401,11 @@
             routeBtn.innerHTML = `<i class="fas ${icon}"></i> ${loading ? "Hesaplanıyor..." : "Rota Çiz"}`;
         }
         
-        // --- Hava Durumu Risk Fonksiyonu (Ayarları kullanır) ---
-        
         function getWeatherRisk(info) {
+            // ... (Aynı kalır, global değişkenleri kullanır)
             const { precipitation, wind } = info;
-            // DANGER_PRECIP ve DANGER_WIND global değişkenlerini kullanır
-            if (precipitation > DANGER_PRECIP || wind >= DANGER_WIND) {
-                return 3; 
-            }
-            // WARNING_PRECIP ve WARNING_WIND global değişkenlerini kullanır
-            if (precipitation > WARNING_PRECIP || wind >= WARNING_WIND) {
-                return 2; 
-            }
+            if (precipitation > DANGER_PRECIP || wind >= DANGER_WIND) { return 3; }
+            if (precipitation > WARNING_PRECIP || wind >= WARNING_WIND) { return 2; }
             return 1; 
         }
 
@@ -446,9 +417,8 @@
             }
         }
         
-        // --- (Diğer yardımcı ve rota fonksiyonları aynı kalır) ---
+        // --- (Diğer yardımcı fonksiyonlar aynı kalır) ---
         // ... (geocode, reverseGeocode, getRoute, getLatLngCoords, getHourlyWeather, findNearestHourIndex) ...
-        
         async function geocode(query) {
             const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(query);
             const res = await fetch(url, { headers: { "Accept-Language": "tr" } });
@@ -504,6 +474,7 @@
         }
 
 
+        // --- ANA ROTA İŞLEYİCİ ---
         async function handleRoute() {
             controlsEl.classList.add('minimized');
             
@@ -513,8 +484,7 @@
             const startText = startInput.value.trim();
             const endText = endInput.value.trim();
             const departureInputVal = departureInput.value;
-            
-            // ... (Rota çizme mantığı devam eder)
+
             if (!startText || !endText) {
                 alert("Başlangıç ve bitiş noktalarını yazmalısınız.");
                 controlsEl.classList.remove('minimized');
@@ -522,7 +492,6 @@
             }
 
             let departureTime = departureInputVal ? new Date(departureInputVal) : new Date();
-            
             if (departureTime.toString() === "Invalid Date") {
                 alert("Geçerli bir çıkış saati giriniz.");
                 controlsEl.classList.remove('minimized');
@@ -535,10 +504,8 @@
             setLoading(true);
 
             try {
-                // 1) Geocode
                 const [start, end] = await Promise.all([geocode(startText), geocode(endText)]);
                 
-                // Başlangıç/Bitiş Markerları
                 const startIcon = L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]});
                 const endIcon = L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]});
                 
@@ -547,12 +514,10 @@
 
                 setStatus("Rota hesaplanıyor...");
 
-                // 2) Rota
                 const route = await getRoute(start, end);
                 const totalDistanceMeters = route.distance;
                 const totalDurationSec = route.duration;
                 
-                // 3) Dinamik Segment Sayısı Hesaplama
                 const requiredSegments = Math.ceil(totalDistanceMeters / (MIN_SEGMENT_DISTANCE_KM * 1000));
                 const sampleCount = Math.max(MIN_SAMPLE_COUNT, requiredSegments); 
 
@@ -586,14 +551,9 @@
                     const wind = hourly.wind_speed_10m[idx];
                     const risk = getWeatherRisk({ precipitation: precip, wind }); 
                     
-                    // Marker (daire) oluştur
                     const markerColor = getRiskColor(risk);
                     const marker = L.circleMarker(currentCoords, {
-                        radius: 5, 
-                        color: markerColor,
-                        weight: 1,
-                        fillColor: markerColor,
-                        fillOpacity: 0.8,
+                        radius: 5, color: markerColor, weight: 1, fillColor: markerColor, fillOpacity: 0.8,
                     }).bindPopup(`
                         <b>Varış:</b> ${estimatedArrivalTime.toLocaleString("tr-TR")}<br/>
                         <b>Sıcaklık:</b> ${temp.toFixed(1)} °C<br/>
@@ -602,7 +562,6 @@
                     `);
                     weatherLayerGroup.addLayer(marker);
                     
-                    // --- SEGMENTASYON MANTIĞI ---
                     if (risk !== lastRisk && lastRisk !== 0) {
                         const segmentCoords = allRouteCoords.slice(segmentStartIdx, currentRouteIdx + 1);
                         segmentResults.push({ coords: segmentCoords, color: getRiskColor(lastRisk) });
@@ -617,17 +576,29 @@
                     }
                 }
                 
-                // 4) Segmentleri haritaya çiz
+                // Rotayı çizerken aynı zamanda GPX/KML ihracat için de sakla
+                const routeGeoJSON = {
+                    type: "FeatureCollection",
+                    features: [{
+                        type: "Feature",
+                        geometry: route.geometry,
+                        properties: { name: "Moto Rota Hava Durumu - " + startText + " to " + endText }
+                    }]
+                };
+                lastRouteGeoJSON = routeGeoJSON;
+                updateExportButtons();
+                
+                if (SHOULD_SAVE_ROUTE) {
+                    localStorage.setItem('lastRouteGeoJSON', JSON.stringify(lastRouteGeoJSON));
+                } else {
+                    localStorage.removeItem('lastRouteGeoJSON');
+                }
+                
                 segmentResults.forEach(segment => {
-                    const polyline = L.polyline(segment.coords, { 
-                        color: segment.color, 
-                        weight: 6, 
-                        opacity: 0.8 
-                    });
+                    const polyline = L.polyline(segment.coords, { color: segment.color, weight: 6, opacity: 0.8 });
                     routeLayerGroup.addLayer(polyline);
                 });
                 
-                // Haritayı rotaya odakla
                 map.fitBounds(L.polyline(allRouteCoords).getBounds(), { padding: [80, 80] });
 
                 setStatus(
@@ -644,47 +615,167 @@
                 setLoading(false);
             }
         }
+        
+        // --- İÇE AKTARMA İŞLEVİ ---
+        importFile.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                importBtn.disabled = false;
+                setStatus(`${e.target.files[0].name} dosyası yüklendi. Haritada göstermek için tıklayın.`);
+            } else {
+                importBtn.disabled = true;
+            }
+        });
+        
+        importBtn.addEventListener('click', () => {
+            const file = importFile.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const parser = new DOMParser();
+                    const gpxOrKml = parser.parseFromString(event.target.result, "text/xml");
+                    
+                    let geojson;
+                    if (file.name.endsWith('.gpx')) {
+                        geojson = toGeoJSON.gpx(gpxOrKml);
+                    } else if (file.name.endsWith('.kml')) {
+                        geojson = toGeoJSON.kml(gpxOrKml);
+                    } else {
+                        throw new Error("Desteklenmeyen dosya formatı.");
+                    }
+
+                    importedRouteLayer.clearLayers(); 
+
+                    L.geoJSON(geojson, {
+                        style: function (feature) {
+                            return { color: 'yellow', weight: 4, opacity: 0.7 }; // İçe aktarılan rotayı sarı renkte göster
+                        },
+                        pointToLayer: function (feature, latlng) {
+                            return L.circleMarker(latlng, { radius: 5, color: 'orange', fillColor: 'orange', fillOpacity: 0.8 });
+                        }
+                    }).addTo(importedRouteLayer);
+                    
+                    if (importedRouteLayer.getLayers().length > 0) {
+                        map.fitBounds(importedRouteLayer.getBounds());
+                        setStatus(`'${file.name}' dosyası haritaya yüklendi.`);
+                    }
+
+                } catch (error) {
+                    setStatus(`Hata: ${file.name} dosyası işlenemedi: ${error.message}`);
+                    console.error("İçe Aktarma Hatası:", error);
+                }
+            };
+            reader.readAsText(file);
+            importBtn.disabled = true;
+            importFile.value = ''; // Inputu sıfırla
+        });
+
+
+        // --- DIŞA AKTARMA İŞLEVİ ---
+        function exportRoute(format) {
+            if (!lastRouteGeoJSON) {
+                alert("Önce bir rota çizmelisiniz.");
+                return;
+            }
+            
+            setStatus(`${format} dosyası oluşturuluyor...`);
+            
+            // Basit GeoJSON'dan GPX/KML'e dönüştürme (İdealde server side yapılır ama basit bir yol)
+            let output;
+            let mimeType;
+            let extension;
+            
+            if (format === 'GPX') {
+                 // Basit GPX yapısını manuel oluştur
+                 const coords = lastRouteGeoJSON.features[0].geometry.coordinates;
+                 const trackPoints = coords.map(c => `<trkpt lat="${c[1]}" lon="${c[0]}"></trkpt>`).join('');
+                 output = `
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" creator="Moto Rota Hava Durumu" version="1.1">
+    <trk>
+        <name>${lastRouteGeoJSON.features[0].properties.name}</name>
+        <trkseg>${trackPoints}</trkseg>
+    </trk>
+</gpx>`.trim();
+                mimeType = "application/gpx+xml";
+                extension = "gpx";
+            } else if (format === 'KML') {
+                // Basit KML yapısını manuel oluştur
+                const coords = lastRouteGeoJSON.features[0].geometry.coordinates;
+                const coordinateString = coords.map(c => `${c[0]},${c[1]},0`).join(' ');
+                output = `
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${lastRouteGeoJSON.features[0].properties.name}</name>
+    <Placemark>
+      <name>Çizilen Rota</name>
+      <LineString>
+        <coordinates>${coordinateString}</coordinates>
+      </LineString>
+    </Placemark>
+  </Document>
+</kml>`.trim();
+                mimeType = "application/vnd.google-earth.kml+xml";
+                extension = "kml";
+            } else {
+                return;
+            }
+
+            const blob = new Blob([output], { type: mimeType });
+            saveAs(blob, `moto_rota_${new Date().toISOString().slice(0, 10)}.${extension}`);
+            setStatus(`${format} dosyası indirilmeye başlandı.`);
+        }
+        
+        exportGPXBtn.addEventListener('click', () => exportRoute('GPX'));
+        exportKMLBtn.addEventListener('click', () => exportRoute('KML'));
+
 
         // --- AYARLARI GÜNCELLE VE MODALI KAPAT ---
         function updateSettingsAndClose() {
-            // Değerleri oku ve geçerli sayısal değerler olup olmadığını kontrol et
+            // Risk Eşikleri
             const newWarnWind = parseFloat(warnWindInput.value);
             const newDangerWind = parseFloat(dangerWindInput.value);
             const newWarnPrecip = parseFloat(warnPrecipInput.value);
             const newDangerPrecip = parseFloat(dangerPrecipInput.value);
+            
+            // Toggle durumu
+            SHOULD_SAVE_ROUTE = saveRouteToggle.checked;
 
-            // Geçerli sayısal değerlerse global değişkenleri güncelle
             if (!isNaN(newWarnWind) && newWarnWind > 0) WARNING_WIND = newWarnWind;
             if (!isNaN(newDangerWind) && newDangerWind > 0) DANGER_WIND = newDangerWind;
             if (!isNaN(newWarnPrecip) && newWarnPrecip >= 0) WARNING_PRECIP = newWarnPrecip;
             if (!isNaN(newDangerPrecip) && newDangerPrecip >= 0) DANGER_PRECIP = newDangerPrecip;
 
-            // Kontrol: Yüksek eşik, orta eşikten büyük olmalı
             if (DANGER_WIND <= WARNING_WIND) {
                 alert("Yüksek Risk Rüzgar eşiği, Orta Risk eşiğinden büyük olmalıdır!");
-                // Hatalıysa inputları tekrar doğru değerlerle doldur (Kullanıcıyı bilgilendirmek için)
                 fillSettingsInputs(); 
-                return; // Kapatma işlemini durdur
+                return;
             }
             if (DANGER_PRECIP <= WARNING_PRECIP) {
                  alert("Yüksek Risk Yağış eşiği, Orta Risk eşiğinden büyük olmalıdır!");
                  fillSettingsInputs(); 
-                 return; // Kapatma işlemini durdur
+                 return;
             }
+            
+            // Ayarları Yerel Depolamaya Kaydet (Kalıcı ayar tercihi)
+            saveSettings();
 
-            // Legend'ı yeni eşiklerle güncelle
             updateLegend();
 
             settingsModal.style.display = 'none';
-            setStatus(`Yeni risk eşikleri ayarlandı. Orta Rüzgar: ${WARNING_WIND} km/s. Yeni rota çiziniz.`);
+            setStatus(`Ayarlar kaydedildi. Kayıt Durumu: ${SHOULD_SAVE_ROUTE ? 'AÇIK' : 'KAPALI'}. Yeni rota çiziniz.`);
         }
 
-        // --- Event Dinleyicileri ---
+        // --- Diğer Event Dinleyicileri ---
         routeBtn.addEventListener("click", handleRoute);
-        // ... (Diğer event dinleyicileri aynı kalır)
+        trackBtn.addEventListener("click", toggleGeolocation);
+        closeSettingsBtn.addEventListener('click', updateSettingsAndClose);
+
+        // ... (useStartLocBtn ve toggleGeolocation fonksiyonları aynı kalır)
         useStartLocBtn.addEventListener('click', () => {
              if (!navigator.geolocation) { alert('Tarayıcınız konum servislerini desteklemiyor.'); return; }
-             // ... (Konum alıcı kod)
             setStatus("Konumunuz alınıyor...");
             useStartLocBtn.disabled = true;
             
@@ -710,7 +801,6 @@
         });
         
         function toggleGeolocation() {
-             // ... (Konum takibi kodu)
              if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
@@ -766,14 +856,6 @@
                 );
             }
         }
-        
-        settingsBtn.addEventListener('click', () => {
-            // Modalı açmadan önce inputları mevcut global değerlerle doldur (Kullanıcının son ayarını görsün)
-            fillSettingsInputs(); 
-            settingsModal.style.display = 'block';
-        });
-        
-        closeSettingsBtn.addEventListener('click', updateSettingsAndClose);
 
         document.getElementById("startInput").addEventListener("keypress", function(e) { if (e.key === 'Enter') handleRoute(); });
         document.getElementById("endInput").addEventListener("keypress", function(e) { if (e.key === 'Enter') handleRoute(); });
