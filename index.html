@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Moto Rota Hava Durumu - Tam Uyumlu UX (v7)</title>
+    <title>Moto Rota Hava Durumu - Ayarlar Aktif (v8)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <link
@@ -29,7 +29,6 @@
             overflow: hidden; 
         }
         
-        /* Tüm elementler için sınırlayıcı kutu modelini kullan */
         * {
             box-sizing: border-box; 
         }
@@ -51,7 +50,7 @@
             transition: max-height 0.3s ease-out, padding 0.3s ease-out;
             max-height: 250px; 
             overflow: hidden;
-            width: 100%; /* Tam genişlik */
+            width: 100%; 
         }
 
         #controls.minimized {
@@ -85,7 +84,6 @@
             position: relative;
         }
         
-        /* Input ve Label'ları her zaman tam genişlikte tut (Mobil Fix) */
         @media (max-width: 768px) {
             #controls label,
             #controls-inputs {
@@ -113,10 +111,9 @@
         #controls input {
             background: #222;
             padding-right: 35px; 
-            width: 100%; /* Mobil Fix */
+            width: 100%; 
         }
 
-        /* Butonlar Grubu - Mobil düzenleme */
         #controls-buttons {
              display: flex;
              gap: 10px;
@@ -138,8 +135,6 @@
         #trackBtn { background: var(--color-primary); flex-grow: 2; }
         #settingsBtn { background: #444; flex-grow: 1; }
         
-        /* ... Diğer CSS kodları aynı kalır ... */
-
         #status-container {
             width: 100%;
             padding: 5px 0 0;
@@ -158,7 +153,7 @@
             height: 100vh;
         }
 
-        /* --- LEAFLET KONTROL İYİLEŞTİRMELERİ --- */
+        /* --- LEAFLET KONTROL İYİLEŞTİRMELERİ (MOBİL ALT MENÜ FIX) --- */
         .leaflet-control-zoom {
             border-radius: 4px !important;
             box-shadow: 0 1px 5px rgba(0,0,0,0.4);
@@ -170,11 +165,16 @@
         }
         
         @media (max-width: 768px) {
+            /* Zoom Butonlarını YUKARI KAYDIR (Tarayıcı alt menüsünden kurtulmak için) */
             .leaflet-top.leaflet-left {
                 top: unset !important;
                 left: unset !important;
-                bottom: 100px !important; 
+                bottom: 120px !important; /* Eskiden 100'dü, daha fazla pay bırakıyoruz */
                 right: 10px !important;
+            }
+            /* Legend'ı da yukarı kaydır */
+            .leaflet-bottom.leaflet-right {
+                bottom: 60px !important; /* Alt menüden kaçış */
             }
             
             #controls.minimized {
@@ -188,7 +188,7 @@
         
         /* --- AYARLAR MODAL STİLİ --- */
         #settingsModal {
-            position: fixed; /* 'absolute' yerine 'fixed' kullandık, bu mobil kaydırma sorununu engeller */
+            position: fixed; 
             top: 0;
             left: 0;
             right: 0;
@@ -295,6 +295,7 @@
                 <label for="dangerPrecip">Yüksek Risk Yağış (mm/saat):</label>
                 <input type="number" id="dangerPrecip" step="0.1" min="0" max="10" />
             </div>
+            <p style="font-size:12px; margin-top: 15px; color: #aaa;">Ayarları değiştirdikten sonra kapat tuşuna basıp yeni bir rota çizin.</p>
         </div>
         
         <div class="setting-group">
@@ -318,7 +319,6 @@
 
     <script>
         // --- Sabitler ve Ayarlar ---
-        // Varsayılan değerler
         let DANGER_WIND = 40; 
         let WARNING_WIND = 25; 
         let DANGER_PRECIP = 2; 
@@ -327,67 +327,22 @@
         const MIN_SEGMENT_DISTANCE_KM = 10; 
         const MIN_SAMPLE_COUNT = 10; 
 
-        // --- Yerel Depolama (localStorage) İşlemleri ---
-        
-        // Ayarları yükle
-        function loadSettings() {
-            const settings = JSON.parse(localStorage.getItem('motoRouteSettings'));
-            if (settings) {
-                // Değişkenleri yerel depolamadan alınan değerlerle güncelle
-                DANGER_WIND = settings.dangerWind || DANGER_WIND;
-                WARNING_WIND = settings.warnWind || WARNING_WIND;
-                DANGER_PRECIP = settings.dangerPrecip || DANGER_PRECIP;
-                WARNING_PRECIP = settings.warnPrecip || WARNING_PRECIP;
-                
-                // Input alanlarını yüklenen değerlerle doldur
-                document.getElementById('warnWind').value = WARNING_WIND;
-                document.getElementById('dangerWind').value = DANGER_WIND;
-                document.getElementById('warnPrecip').value = WARNING_PRECIP;
-                document.getElementById('dangerPrecip').value = DANGER_PRECIP;
-            } else {
-                 // Ayar yoksa varsayılanları inputlara yaz
-                document.getElementById('warnWind').value = WARNING_WIND;
-                document.getElementById('dangerWind').value = DANGER_WIND;
-                document.getElementById('warnPrecip').value = WARNING_PRECIP;
-                document.getElementById('dangerPrecip').value = DANGER_PRECIP;
-            }
-            // Legend'ı (gösterge) da güncelleyelim
-            updateLegend();
-        }
-
-        // Ayarları kaydet
-        function saveSettings() {
-            WARNING_WIND = parseFloat(document.getElementById('warnWind').value) || 25;
-            DANGER_WIND = parseFloat(document.getElementById('dangerWind').value) || 40;
-            WARNING_PRECIP = parseFloat(document.getElementById('warnPrecip').value) || 0.1;
-            DANGER_PRECIP = parseFloat(document.getElementById('dangerPrecip').value) || 2;
-            
-            const settings = {
-                warnWind: WARNING_WIND,
-                dangerWind: DANGER_WIND,
-                warnPrecip: WARNING_PRECIP,
-                dangerPrecip: DANGER_PRECIP
-            };
-            localStorage.setItem('motoRouteSettings', JSON.stringify(settings));
-            
-            updateLegend();
-            setStatus("Ayarlar kaydedildi. Yeni rota çizimi için geçerli olacak.");
-        }
-        
         // --- Haritayı başlat & Legend Güncelleme ---
         
         const map = L.map("map", { zoomControl: false }); 
-        
-        // Legend öğesini global bir değişken yap
         let customLegend = null; 
+        
+        const warnWindInput = document.getElementById('warnWind');
+        const dangerWindInput = document.getElementById('dangerWind');
+        const warnPrecipInput = document.getElementById('warnPrecip');
+        const dangerPrecipInput = document.getElementById('dangerPrecip');
+
 
         function updateLegend() {
-            // Eskiyi varsa kaldır
             if (customLegend) {
                 map.removeControl(customLegend);
             }
             
-            // Yeni Legend oluştur
             customLegend = L.control({ position: "bottomright" });
             customLegend.onAdd = function () {
                 const div = L.DomUtil.create("div", "legend");
@@ -402,8 +357,16 @@
             customLegend.addTo(map);
         }
 
+        // Ayar inputlarının varsayılan değerlerle doldurulması
+        function fillSettingsInputs() {
+            warnWindInput.value = WARNING_WIND;
+            dangerWindInput.value = DANGER_WIND;
+            warnPrecipInput.value = WARNING_PRECIP;
+            dangerPrecipInput.value = DANGER_PRECIP;
+        }
 
         function setInitialMapView() {
+            // ... (Aynı kalır)
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
@@ -427,10 +390,10 @@
             attribution: '&copy; OSM & OSRM & Open-Meteo',
         }).addTo(map);
 
+        fillSettingsInputs(); // Inputları varsayılan değerlerle doldur
         setInitialMapView();
-        loadSettings(); // Ayarları yükle
+        updateLegend(); 
         
-        // Yeni Zoom Kontrolü (Sağ altta)
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
 
@@ -464,9 +427,11 @@
         
         function getWeatherRisk(info) {
             const { precipitation, wind } = info;
+            // DANGER_PRECIP ve DANGER_WIND global değişkenlerini kullanır
             if (precipitation > DANGER_PRECIP || wind >= DANGER_WIND) {
                 return 3; 
             }
+            // WARNING_PRECIP ve WARNING_WIND global değişkenlerini kullanır
             if (precipitation > WARNING_PRECIP || wind >= WARNING_WIND) {
                 return 2; 
             }
@@ -481,8 +446,9 @@
             }
         }
         
-        // --- Diğer Yardımcı ve Ana Rota Fonksiyonları (Aynı kalır) ---
-
+        // --- (Diğer yardımcı ve rota fonksiyonları aynı kalır) ---
+        // ... (geocode, reverseGeocode, getRoute, getLatLngCoords, getHourlyWeather, findNearestHourIndex) ...
+        
         async function geocode(query) {
             const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(query);
             const res = await fetch(url, { headers: { "Accept-Language": "tr" } });
@@ -537,16 +503,18 @@
             return bestIdx;
         }
 
+
         async function handleRoute() {
             controlsEl.classList.add('minimized');
-            // ... (Kalan Rota çizme fonksiyonu aynı kalır, sadece risk değişkenlerini globalden çeker)
+            
             const endInput = document.getElementById("endInput");
             const departureInput = document.getElementById("departureInput");
             
             const startText = startInput.value.trim();
             const endText = endInput.value.trim();
             const departureInputVal = departureInput.value;
-
+            
+            // ... (Rota çizme mantığı devam eder)
             if (!startText || !endText) {
                 alert("Başlangıç ve bitiş noktalarını yazmalısınız.");
                 controlsEl.classList.remove('minimized');
@@ -616,7 +584,7 @@
                     const temp = hourly.temperature_2m[idx];
                     const precip = hourly.precipitation[idx];
                     const wind = hourly.wind_speed_10m[idx];
-                    const risk = getWeatherRisk({ precipitation: precip, wind }); // GÜNCEL RİSK DEĞERLERİNİ KULLANIR
+                    const risk = getWeatherRisk({ precipitation: precip, wind }); 
                     
                     // Marker (daire) oluştur
                     const markerColor = getRiskColor(risk);
@@ -677,12 +645,46 @@
             }
         }
 
-        // ... (useStartLocBtn ve toggleGeolocation fonksiyonları aynı kalır)
-        useStartLocBtn.addEventListener('click', () => {
-             if (!navigator.geolocation) {
-                alert('Tarayıcınız konum servislerini desteklemiyor.');
-                return;
+        // --- AYARLARI GÜNCELLE VE MODALI KAPAT ---
+        function updateSettingsAndClose() {
+            // Değerleri oku ve geçerli sayısal değerler olup olmadığını kontrol et
+            const newWarnWind = parseFloat(warnWindInput.value);
+            const newDangerWind = parseFloat(dangerWindInput.value);
+            const newWarnPrecip = parseFloat(warnPrecipInput.value);
+            const newDangerPrecip = parseFloat(dangerPrecipInput.value);
+
+            // Geçerli sayısal değerlerse global değişkenleri güncelle
+            if (!isNaN(newWarnWind) && newWarnWind > 0) WARNING_WIND = newWarnWind;
+            if (!isNaN(newDangerWind) && newDangerWind > 0) DANGER_WIND = newDangerWind;
+            if (!isNaN(newWarnPrecip) && newWarnPrecip >= 0) WARNING_PRECIP = newWarnPrecip;
+            if (!isNaN(newDangerPrecip) && newDangerPrecip >= 0) DANGER_PRECIP = newDangerPrecip;
+
+            // Kontrol: Yüksek eşik, orta eşikten büyük olmalı
+            if (DANGER_WIND <= WARNING_WIND) {
+                alert("Yüksek Risk Rüzgar eşiği, Orta Risk eşiğinden büyük olmalıdır!");
+                // Hatalıysa inputları tekrar doğru değerlerle doldur (Kullanıcıyı bilgilendirmek için)
+                fillSettingsInputs(); 
+                return; // Kapatma işlemini durdur
             }
+            if (DANGER_PRECIP <= WARNING_PRECIP) {
+                 alert("Yüksek Risk Yağış eşiği, Orta Risk eşiğinden büyük olmalıdır!");
+                 fillSettingsInputs(); 
+                 return; // Kapatma işlemini durdur
+            }
+
+            // Legend'ı yeni eşiklerle güncelle
+            updateLegend();
+
+            settingsModal.style.display = 'none';
+            setStatus(`Yeni risk eşikleri ayarlandı. Orta Rüzgar: ${WARNING_WIND} km/s. Yeni rota çiziniz.`);
+        }
+
+        // --- Event Dinleyicileri ---
+        routeBtn.addEventListener("click", handleRoute);
+        // ... (Diğer event dinleyicileri aynı kalır)
+        useStartLocBtn.addEventListener('click', () => {
+             if (!navigator.geolocation) { alert('Tarayıcınız konum servislerini desteklemiyor.'); return; }
+             // ... (Konum alıcı kod)
             setStatus("Konumunuz alınıyor...");
             useStartLocBtn.disabled = true;
             
@@ -708,6 +710,7 @@
         });
         
         function toggleGeolocation() {
+             // ... (Konum takibi kodu)
              if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
@@ -764,27 +767,17 @@
             }
         }
         
-        // --- AYARLAR MODAL İŞLEYİCİLERİ ---
         settingsBtn.addEventListener('click', () => {
-            // Modalı açmadan önce kaydedilmiş değerleri yükle (loadSettings en başta çağrıldığı için gerekli değil ama burada tekrar kontrol edebiliriz)
-            loadSettings(); 
+            // Modalı açmadan önce inputları mevcut global değerlerle doldur (Kullanıcının son ayarını görsün)
+            fillSettingsInputs(); 
             settingsModal.style.display = 'block';
         });
         
-        closeSettingsBtn.addEventListener('click', () => {
-            // Modal kapatılınca ayarları kaydet
-            saveSettings();
-            settingsModal.style.display = 'none';
-        });
+        closeSettingsBtn.addEventListener('click', updateSettingsAndClose);
 
-        // --- Event Dinleyicileri ---
-        routeBtn.addEventListener("click", handleRoute);
-        trackBtn.addEventListener("click", toggleGeolocation);
-        
         document.getElementById("startInput").addEventListener("keypress", function(e) { if (e.key === 'Enter') handleRoute(); });
         document.getElementById("endInput").addEventListener("keypress", function(e) { if (e.key === 'Enter') handleRoute(); });
         document.getElementById("departureInput").addEventListener("keypress", function(e) { if (e.key === 'Enter') handleRoute(); });
-        
     </script>
 </body>
 </html>
