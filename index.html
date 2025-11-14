@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Moto Rota Hava Durumu - V3 (POI İyileştirmeleri)</title>
+    <title>Moto Rota Hava Durumu - Mobil Uyumluluk Düzeltmesi (v14)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <link
@@ -36,15 +36,15 @@
             --color-info: #00bcd4;
         }
 
-        /* Light Theme Desteği - Eğer sonradan eklenirse diye tutulmuştur */
+        /* YENİ: LIGHT THEME DESTEĞİ */
         body.light-theme {
             --color-bg: #fff;
             --color-text: #333;
-            --color-primary: #039be5;
-            --color-danger: #e53935;
-            --color-warning: #ffb300;
-            --color-success: #43a047;
-            --color-info: #00acc1;
+            --color-primary: #1e88e5; 
+            --color-danger: #f44336;
+            --color-warning: #ff9800;
+            --color-success: #4caf50;
+            --color-info: #00bcd4;
         }
 
         body.light-theme #controls, 
@@ -52,20 +52,45 @@
         body.light-theme #poiControls {
             background: rgba(255, 255, 255, 0.95);
             color: var(--color-text);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
         }
-        body.light-theme #controls input { 
+        
+        body.light-theme #controls input {
             background: #f0f0f0; 
-            border: 1px solid #ccc;
-        }
-        body.light-theme .poi-button {
-            background: #eee;
-            color: var(--color-text);
             border: 1px solid #ddd;
+            color: var(--color-text);
         }
-        body.light-theme .poi-button:hover { background: #ddd; }
-
-
+        
+        body.light-theme .setting-group {
+             background: #f8f8f8;
+        }
+        
+        body.light-theme #settingsModal {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--color-text);
+        }
+        
+        body.light-theme #settingsModal h2 {
+             border-bottom: 1px solid #ddd;
+        }
+        
+        body.light-theme .setting-item {
+             border-bottom: 1px dashed #eee;
+        }
+        
+        body.light-theme .setting-item input[type="number"] {
+            background: #fff;
+        }
+        
+        /* Popup'lar için tema geçişi */
+        .leaflet-popup-content-wrapper { 
+            background: var(--color-bg); 
+            color: var(--color-text); 
+            transition: background 0.3s, color 0.3s;
+        }
+        .leaflet-popup-tip { background: var(--color-bg); transition: background 0.3s; }
+        
+        /* Geri kalan CSS aynı kalır */
         * { box-sizing: border-box; }
 
         /* KONTROL ÇUBUĞU */
@@ -189,15 +214,8 @@
         #poiControls { display: none; padding: 10px 15px; } /* Başlangıçta gizli */
 
         /* Geri kalan CSS (Legend, Modal vs.) aynı kalır */
-        #status-container { 
-            width: 100%; 
-            padding: 5px 0 0; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; /* Hız göstergesi için */
-        }
+        #status-container { width: 100%; padding: 5px 0 0; display: flex; align-items: center; }
         #status { font-size: 13px; color: #ccc; flex-grow: 1; }
-        #speedometer { font-size: 13px; color: var(--color-warning); font-weight: bold; padding-left: 10px; } /* Yeni */
         .leaflet-control-zoom { border-radius: 4px !important; box-shadow: 0 1px 5px rgba(0,0,0,0.4); }
         .leaflet-control-zoom-in, .leaflet-control-zoom-out { font-size: 18px !important; padding: 5px 8px !important; line-height: 1.2 !important; }
         
@@ -248,32 +266,6 @@
             cursor: pointer; transition: background 0.2s;
         }
         .file-controls button:hover { background: #777; }
-        
-        /* POPUP STYLES - POI POPUP'ı için (gerekirse) */
-        .leaflet-popup-content-wrapper { background: var(--color-bg); color: var(--color-text); }
-        .leaflet-popup-tip { background: var(--color-bg); }
-        
-        /* Legend CSS */
-        .legend {
-            background: rgba(17, 17, 17, 0.8);
-            padding: 10px;
-            border-radius: 5px;
-            color: var(--color-text);
-            font-size: 12px;
-            line-height: 1.5;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.65);
-        }
-        .legend div {
-            display: flex;
-            align-items: center;
-        }
-        .legend span {
-            width: 12px;
-            height: 12px;
-            margin-right: 5px;
-            border-radius: 2px;
-            display: inline-block;
-        }
     </style>
 </head>
 <body>
@@ -300,7 +292,7 @@
         
         <div id="status-container">
             <span id="status">Harita hazırlanıyor...</span>
-            <span id="speedometer"></span> </div>
+        </div>
     </div>
     
     <button id="mapToggleBtn" title="Harita/Uydu Görüntüsü Geçişi">
@@ -316,6 +308,29 @@
     <div id="settingsModal">
         <div class="close-button" id="closeSettingsBtn">×</div>
         <h2><i class="fas fa-cog"></i> Uygulama Ayarları</h2>
+        
+        <div class="setting-group">
+            <h3><i class="fas fa-palette"></i> Tema Ayarları</h3>
+            <div class="setting-item">
+                <label for="themeToggle">Koyu Tema Kullan</label>
+                <label class="switch">
+                    <input type="checkbox" id="themeToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <h3><i class="fas fa-mug-hot"></i> Mola Zamanlayıcısı</h3>
+            <div class="setting-item">
+                <label for="breakIntervalHours">Her kaç saat sürüş sonrası mola verilsin:</label>
+                <input type="number" id="breakIntervalHours" min="1" max="10" />
+            </div>
+            <div class="setting-item">
+                <label for="breakDurationMin">Mola Süresi (dakika):</label>
+                <input type="number" id="breakDurationMin" min="1" max="180" />
+            </div>
+        </div>
         
         <div class="setting-group">
             <h3><i class="fas fa-database"></i> Veri Yönetimi</h3>
@@ -384,20 +399,19 @@
         let DANGER_PRECIP = 2; 
         let WARNING_PRECIP = 0.1; 
         let SHOULD_SAVE_ROUTE = false;
+        let BREAK_DURATION_MIN = 30; // YENİ: Mola süresi (dakika)
+        let BREAK_INTERVAL_HOURS = 2; // YENİ: Mola aralığı (saat)
         
         const MIN_SEGMENT_DISTANCE_KM = 10; 
         const MIN_SAMPLE_COUNT = 10; 
         const POI_SEARCH_BUFFER_KM = 2; 
 
-        // --- Global Değişkenler (Yeni Rota Verileri eklendi) ---
+        // --- Global Değişkenler ---
         let lastRouteGeoJSON = null; 
         let importedRouteLayer = L.layerGroup(); 
         let currentMapType = 'osm'; 
+        let currentTheme = 'dark'; // YENİ: Tema değişkeni
         
-        let totalRouteDistanceMeters = 0; // Yeni: Toplam mesafe
-        let totalRouteDurationSeconds = 0; // Yeni: Toplam süre
-        let fullRouteCoords = []; // Yeni: Rotanın tüm koordinatları
-
         // Yeni POI Katmanları
         const poiLayerGroups = {
             fuel: L.layerGroup(),
@@ -437,13 +451,18 @@
         const warnPrecipInput = document.getElementById('warnPrecip');
         const dangerPrecipInput = document.getElementById('dangerPrecip');
         const saveRouteToggle = document.getElementById('saveRouteToggle');
+        
+        // YENİ INPUTLAR
+        const themeToggle = document.getElementById('themeToggle'); 
+        const breakDurationMinInput = document.getElementById('breakDurationMin'); 
+        const breakIntervalHoursInput = document.getElementById('breakIntervalHours'); 
+        
         const exportGPXBtn = document.getElementById('exportGPXBtn');
         const exportKMLBtn = document.getElementById('exportKMLBtn');
         const importFile = document.getElementById('importFile');
         const importBtn = document.getElementById('importBtn');
         const clearBtn = document.getElementById('clearBtn'); 
         const statusEl = document.getElementById("status");
-        const speedometerEl = document.getElementById("speedometer"); // Yeni
         const routeBtn = document.getElementById("routeBtn");
         const trackBtn = document.getElementById("trackBtn");
         const settingsBtn = document.getElementById("settingsBtn");
@@ -453,6 +472,17 @@
         const startInput = document.getElementById("startInput");
         let trackingMarker = null;
         let watchId = null; 
+        
+        // YENİ: TEMA FONKSİYONU
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                document.body.classList.add('light-theme');
+                currentTheme = 'light';
+            } else {
+                document.body.classList.remove('light-theme');
+                currentTheme = 'dark';
+            }
+        }
 
 
         // --- YEREL DEPOLAMA ve İLK YÜKLEME ---
@@ -464,29 +494,26 @@
                 DANGER_PRECIP = settings.dangerPrecip || DANGER_PRECIP;
                 WARNING_PRECIP = settings.warnPrecip || WARNING_PRECIP;
                 SHOULD_SAVE_ROUTE = settings.shouldSaveRoute || false;
+                
+                // YENİ AYARLARIN YÜKLENMESİ
+                currentTheme = settings.theme || 'dark';
+                BREAK_DURATION_MIN = settings.breakDurationMin || BREAK_DURATION_MIN;
+                BREAK_INTERVAL_HOURS = settings.breakIntervalHours || BREAK_INTERVAL_HOURS;
             }
             
             fillSettingsInputs();
+            applyTheme(currentTheme); // Yüklü temayı uygula
             
             if (SHOULD_SAVE_ROUTE) {
                 const lastRoute = localStorage.getItem('lastRouteGeoJSON');
                 if (lastRoute) {
                     lastRouteGeoJSON = JSON.parse(lastRoute);
-                    // Rota verileri eksikse POI ve Rota detaylarını gösteremez
-                    const routeFeature = lastRouteGeoJSON.features && lastRouteGeoJSON.features[0];
-                    if (routeFeature && routeFeature.geometry) {
+                    setStatus("Önceki rota verisi yüklendi. Tekrar çizmek için Başlangıç/Bitiş'i kullanın.");
+                    if (lastRouteGeoJSON.features && lastRouteGeoJSON.features[0].geometry) {
                         L.geoJSON(lastRouteGeoJSON, { style: { color: '#00ccff', weight: 6, opacity: 0.5 } }).addTo(routeLayerGroup);
-                        fullRouteCoords = getLatLngCoords(routeFeature.geometry);
-                        
-                        // Ekstra olarak rotanın mesafe/süre bilgisini de depolamış olmalı
-                        totalRouteDistanceMeters = routeFeature.properties.distance || 0;
-                        totalRouteDurationSeconds = routeFeature.properties.duration || 0;
-                        
-                        if (fullRouteCoords.length > 0) map.fitBounds(L.polyline(fullRouteCoords).getBounds(), { padding: [80, 80] });
+                        const allCoords = getLatLngCoords(lastRouteGeoJSON.features[0].geometry);
+                        if (allCoords.length > 0) map.fitBounds(L.polyline(allCoords).getBounds(), { padding: [80, 80] });
                         controlsEl.classList.add('minimized'); 
-                        setStatus("Önceki rota verisi yüklendi. POI panelini kullanabilirsiniz.");
-                    } else {
-                         setStatus("Önceki rota verisi yüklendi, ancak detayları eksik.");
                     }
                 }
             }
@@ -499,7 +526,12 @@
                 dangerWind: DANGER_WIND,
                 warnPrecip: WARNING_PRECIP,
                 dangerPrecip: DANGER_PRECIP,
-                shouldSaveRoute: SHOULD_SAVE_ROUTE 
+                shouldSaveRoute: SHOULD_SAVE_ROUTE,
+                
+                // YENİ AYARLARIN KAYDEDİLMESİ
+                theme: currentTheme,
+                breakDurationMin: BREAK_DURATION_MIN,
+                breakIntervalHours: BREAK_INTERVAL_HOURS,
             };
             localStorage.setItem('motoAppSettings', JSON.stringify(settings));
         }
@@ -536,6 +568,11 @@
             warnPrecipInput.value = WARNING_PRECIP;
             dangerPrecipInput.value = DANGER_PRECIP;
             saveRouteToggle.checked = SHOULD_SAVE_ROUTE;
+            
+            // YENİ INPUTLARIN DOLDURULMASI
+            themeToggle.checked = currentTheme === 'dark'; 
+            breakDurationMinInput.value = BREAK_DURATION_MIN;
+            breakIntervalHoursInput.value = BREAK_INTERVAL_HOURS;
         }
 
         function setInitialMapView() {
@@ -547,7 +584,7 @@
                     },
                     (err) => {
                         map.setView([39.0, 35.0], 6); 
-                        setStatus("Harita hazır. Başlangıç ve bitiş giriniz.");
+                        setStatus("Harita hazır. Başlangıç ve bitiş giriniz. Konum erişimi hatası: " + err.message);
                     },
                     { enableHighAccuracy: false, timeout: 5000 }
                 );
@@ -579,59 +616,27 @@
         }
         document.getElementById('mapToggleBtn').addEventListener('click', toggleMapLayer);
 
-        // --- POI ARAMA İŞLEVLERİ (Güncellendi) ---
-        
-        // Leaflet.Geodesy'nin L.latLng.prototype.distanceTo'suna benzer, basit Haversine veya koordinat aralığına göre
-        // en yakın indeksi bulur. L.GeometryUtil.closest() kullanılamadığı için manuel arama.
-        function findNearestPointIndex(poiLat, poiLon, routeCoords) {
-            let nearestIndex = -1;
-            let minDistance = Infinity;
-            const poiLatLng = L.latLng(poiLat, poiLon);
-
-            for (let i = 0; i < routeCoords.length; i++) {
-                const routePoint = L.latLng(routeCoords[i][0], routeCoords[i][1]);
-                const distance = poiLatLng.distanceTo(routePoint); 
-
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestIndex = i;
-                }
-            }
-            return nearestIndex;
-        }
-
-
+        // --- POI ARAMA İŞLEVLERİ (Aynı kalır) ---
         function buildOverpassQuery(poiType, routeGeoJSON, bufferKm) {
             if (!routeGeoJSON || !routeGeoJSON.features || routeGeoJSON.features.length === 0) return null;
 
             const coords = routeGeoJSON.features[0].geometry.coordinates;
-            const points = [];
-            const totalPoints = coords.length;
-            const sampleCount = 100; // Rotanın tamamını kapsayacak şekilde 100 nokta örnekle
-
-            // Noktaları rotaya eşit şekilde dağıt
-            for (let i = 0; i < sampleCount; i++) {
-                const index = Math.round(i / (sampleCount - 1) * (totalPoints - 1));
-                points.push(coords[index]);
-            }
+            const points = coords.filter((_, i) => i % 10 === 0 || i === coords.length - 1);
 
             let query = `[out:json][timeout:30];\n`;
             
             let osmKeys;
             switch(poiType) {
                 case 'fuel':
-                    // Benzinlik (Fuel)
                     osmKeys = `node["amenity"="fuel"](around:${bufferKm * 1000}, {lat}, {lon});\n`;
                     break;
                 case 'lodging':
-                    // Konaklama (Lodging) - Otel, Motel, Pansiyon, Hostel
                     osmKeys = `node["tourism"~"hotel|motel|guest_house|hostel"](around:${bufferKm * 1000}, {lat}, {lon});\n`;
                     break;
                 default:
                     return null;
             }
 
-            // Her örnek nokta etrafında arama yap
             points.forEach(c => {
                 const lon = c[0];
                 const lat = c[1];
@@ -644,15 +649,14 @@
         }
 
         async function fetchAndDisplayPOIs(poiType) {
-            if (!lastRouteGeoJSON || fullRouteCoords.length === 0) {
-                setStatus("Önce bir rota çizmeli ve rota verilerinin tam olarak yüklendiğinden emin olmalısınız.");
+            if (!lastRouteGeoJSON) {
+                setStatus("Önce bir rota çizmelisiniz.");
                 poiButtons[poiType].classList.remove('active');
                 return;
             }
 
             const layerGroup = poiLayerGroups[poiType];
             
-            // Eğer katmanda zaten POI varsa, temizle ve çık.
             if (layerGroup.getLayers().length > 0) {
                  layerGroup.clearLayers();
                  setStatus(`${poiType} POI'leri haritadan kaldırıldı.`);
@@ -709,36 +713,8 @@
                         const name = el.tags.name || 'İsimsiz Yer';
                         const type = el.tags.amenity || el.tags.tourism || poiType;
 
-                        // Rotadaki en yakın noktayı bul (Yeni: Mesafe ve Süre hesaplaması için)
-                        const nearestIndex = findNearestPointIndex(lat, lon, fullRouteCoords);
-
-                        let popupContent;
-                        if (nearestIndex !== -1 && totalRouteDistanceMeters > 0) {
-                            // En yakın noktadan sonra kalan yolun kesri
-                            const fractionRemaining = 1 - (nearestIndex / (fullRouteCoords.length - 1));
-                            
-                            // Kalan mesafe ve süre hesapla
-                            const distanceRemainingKm = (fractionRemaining * totalRouteDistanceMeters) / 1000;
-                            const timeRemainingSec = fractionRemaining * totalRouteDurationSeconds;
-
-                            const timeDisplay = timeRemainingSec > 3600 
-                                ? `${(timeRemainingSec / 3600).toFixed(1)} saat` 
-                                : `${Math.ceil(timeRemainingSec / 60)} dakika`;
-
-                            popupContent = `
-                                <b>${name}</b><br/>
-                                Tip: ${type}<br/>
-                                <hr style="margin: 5px 0; border-color: #555;">
-                                <b>Rotada Kalan Mesafe:</b> ${distanceRemainingKm.toFixed(0)} km<br/>
-                                <b>Tahmini Süre:</b> ${timeDisplay}<br/>
-                                <a href="http://maps.google.com/?q=${lat},${lon}" target="_blank">Google Haritalar'da Aç</a>
-                            `;
-                        } else {
-                            popupContent = `<b>${name}</b><br/>Tip: ${type}<br/><a href="http://maps.google.com/?q=${lat},${lon}" target="_blank">Google Haritalar'da Aç</a>`;
-                        }
-
                         L.marker([lat, lon], { icon: poiIcon })
-                            .bindPopup(popupContent)
+                            .bindPopup(`<b>${name}</b><br/>Tip: ${type}<br/><a href="https://maps.google.com/maps?q=${lat},${lon}" target="_blank">Google Haritalar'da Aç</a>`)
                             .addTo(layerGroup);
                         count++;
                     }
@@ -771,7 +747,7 @@
             });
         });
 
-        // --- TEMİZLEME İŞLEVİ (Güncellendi) ---
+        // --- TEMİZLEME İŞLEVİ ---
         function clearMapAndResetControls() {
             routeLayerGroup.clearLayers();
             weatherLayerGroup.clearLayers();
@@ -782,11 +758,6 @@
             poiControlsEl.style.display = 'none';
             
             lastRouteGeoJSON = null;
-            
-            // Yeni route datalarını temizle
-            totalRouteDistanceMeters = 0;
-            totalRouteDurationSeconds = 0;
-            fullRouteCoords = [];
             
             if (watchId) toggleGeolocation(); 
             
@@ -800,7 +771,7 @@
         clearBtn.addEventListener('click', clearMapAndResetControls);
 
 
-        // --- DİĞER FONKSİYONLAR (Rota verisi kaydetme güncellendi) ---
+        // --- DİĞER FONKSİYONLAR (Aynı kalır) ---
         function setStatus(msg) { statusEl.textContent = msg || ""; }
         function setLoading(loading) {
             routeBtn.disabled = loading;
@@ -875,8 +846,6 @@
             }
             return bestIdx;
         }
-        
-        // --- handleRoute fonksiyonu (Güncellendi) ---
         async function handleRoute() {
             controlsEl.classList.add('minimized');
             const endInput = document.getElementById("endInput");
@@ -884,7 +853,6 @@
             const startText = startInput.value.trim();
             const endText = endInput.value.trim();
             const departureInputVal = departureInput.value;
-            
             if (!startText || !endText) {
                 alert("Başlangıç ve bitiş noktalarını yazmalısınız.");
                 controlsEl.classList.remove('minimized');
@@ -896,9 +864,11 @@
                 controlsEl.classList.remove('minimized');
                 return;
             }
-            
-            clearMapAndResetControls(); // Eski rotaları temizle
-            
+            routeLayerGroup.clearLayers();
+            weatherLayerGroup.clearLayers();
+            importedRouteLayer.clearLayers(); 
+            Object.values(poiLayerGroups).forEach(layer => layer.clearLayers());
+            Object.values(poiButtons).forEach(btn => btn.classList.remove('active'));
             setStatus("Konumlar çözümleniyor...");
             setLoading(true);
             try {
@@ -907,55 +877,65 @@
                 const endIcon = L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]});
                 L.marker([start.lat, start.lon], {icon: startIcon}).addTo(routeLayerGroup).bindPopup(`<b>Başlangıç:</b> ${start.display_name}`).openPopup();
                 L.marker([end.lat, end.lon], {icon: endIcon}).addTo(routeLayerGroup).bindPopup(`<b>Bitiş:</b> ${end.display_name}`);
-                
                 setStatus("Rota hesaplanıyor...");
                 const route = await getRoute(start, end);
+                const totalDistanceMeters = route.distance;
+                const totalDurationSec = route.duration; // Sadece sürüş süresi
                 
-                // Rota verilerini global değişkenlere kaydet (POI için gerekli)
-                totalRouteDistanceMeters = route.distance;
-                totalRouteDurationSeconds = route.duration;
-                fullRouteCoords = getLatLngCoords(route.geometry); 
-
-                const requiredSegments = Math.ceil(totalRouteDistanceMeters / (MIN_SEGMENT_DISTANCE_KM * 1000));
+                // YENİ: MOLA ZAMANI HESAPLAMA
+                const breakIntervalSec = BREAK_INTERVAL_HOURS * 3600;
+                const breakDurationSec = BREAK_DURATION_MIN * 60;
+                
+                // Toplam sürüş süresi içinde kaç mola ekleneceğini hesapla (sadece sürüş süresine göre)
+                const numBreaks = Math.floor(totalDurationSec / breakIntervalSec); 
+                const totalBreakTimeSec = numBreaks * breakDurationSec;
+                const totalTimeSec = totalDurationSec + totalBreakTimeSec; // Toplam seyahat süresi (sürüş + mola)
+                
+                const requiredSegments = Math.ceil(totalDistanceMeters / (MIN_SEGMENT_DISTANCE_KM * 1000));
                 const sampleCount = Math.max(MIN_SAMPLE_COUNT, requiredSegments); 
-                const totalPoints = fullRouteCoords.length;
-                
+                const allRouteCoords = getLatLngCoords(route.geometry);
+                const totalPoints = allRouteCoords.length;
                 const indices = [];
                 for (let i = 0; i < sampleCount; i++) {
                     indices.push(Math.round(i / (sampleCount - 1) * (totalPoints - 1)));
                 }
-                
                 setStatus(`Hava durumu (${sampleCount} nokta) ve segmentler belirleniyor...`);
                 let lastRisk = 0;
                 let segmentStartIdx = 0;
                 let segmentResults = [];
-                
                 for (let i = 0; i < indices.length; i++) {
                     const currentRouteIdx = indices[i];
-                    const currentCoords = fullRouteCoords[currentRouteIdx];
+                    const currentCoords = allRouteCoords[currentRouteIdx];
                     const fraction = currentRouteIdx / (totalPoints - 1); 
                     
+                    // Bu noktaya kadar geçen tahmini SÜRÜŞ süresi (saniye)
+                    const drivingTimeElapsed = fraction * totalDurationSec; 
+                    
+                    // Bu noktaya kadar eklenen mola sayısı ve toplam mola süresi
+                    const breaksAdded = Math.floor(drivingTimeElapsed / breakIntervalSec);
+                    const breakTimeAdded = breaksAdded * breakDurationSec;
+                    
+                    // Toplam geçen süre (sürüş + mola)
+                    const totalTimeElapsed = drivingTimeElapsed + breakTimeAdded;
+
                     const estimatedArrivalTime = new Date(
-                        departureTime.getTime() + fraction * totalRouteDurationSeconds * 1000
+                        departureTime.getTime() + totalTimeElapsed * 1000
                     );
                     
                     const hourly = await getHourlyWeather(currentCoords[0], currentCoords[1]);
                     const idx = findNearestHourIndex(hourly.time, estimatedArrivalTime);
-                    
                     const temp = hourly.temperature_2m[idx];
                     const precip = hourly.precipitation[idx];
                     const wind = hourly.wind_speed_10m[idx];
                     const risk = getWeatherRisk({ precipitation: precip, wind }); 
                     const markerColor = getRiskColor(risk);
                     const riskIcons = getRiskIcon({ precipitation: precip, wind }); 
-                    
                     const weatherIcon = L.divIcon({
                         className: 'weather-icon',
                         html: `<div style="color: ${markerColor}; font-size: 16px;">${riskIcons}</div>`,
                         iconSize: [20, 20],
                         iconAnchor: [10, 10]
                     });
-                    
                     const marker = L.marker(currentCoords, {
                         icon: weatherIcon
                     }).bindPopup(`
@@ -966,53 +946,41 @@
                         <b>Yağış:</b> ${precip.toFixed(2)} mm/saat
                     `);
                     weatherLayerGroup.addLayer(marker);
-                    
                     if (risk !== lastRisk && lastRisk !== 0) {
-                        const segmentCoords = fullRouteCoords.slice(segmentStartIdx, currentRouteIdx + 1);
+                        const segmentCoords = allRouteCoords.slice(segmentStartIdx, currentRouteIdx + 1);
                         segmentResults.push({ coords: segmentCoords, color: getRiskColor(lastRisk) });
                         segmentStartIdx = currentRouteIdx;
                     }
                     lastRisk = risk;
-                    
                     if (i === indices.length - 1) {
-                         const segmentCoords = fullRouteCoords.slice(segmentStartIdx, fullRouteCoords.length);
+                         const segmentCoords = allRouteCoords.slice(segmentStartIdx, allRouteCoords.length);
                          segmentResults.push({ coords: segmentCoords, color: getRiskColor(lastRisk) });
                     }
                 }
-                
                 const routeGeoJSON = {
                     type: "FeatureCollection",
                     features: [{
                         type: "Feature",
                         geometry: route.geometry,
-                        properties: { 
-                            name: "Moto Rota Hava Durumu - " + startText + " to " + endText,
-                            distance: totalRouteDistanceMeters, // Mesafe bilgisini kaydet
-                            duration: totalRouteDurationSeconds // Süre bilgisini kaydet
-                        }
+                        properties: { name: "Moto Rota Hava Durumu - " + startText + " to " + endText }
                     }]
                 };
-                
                 lastRouteGeoJSON = routeGeoJSON;
                 updateExportButtons();
-                
                 if (SHOULD_SAVE_ROUTE) {
                     localStorage.setItem('lastRouteGeoJSON', JSON.stringify(lastRouteGeoJSON));
                 } else {
                     localStorage.removeItem('lastRouteGeoJSON');
                 }
-                
                 segmentResults.forEach(segment => {
                     const polyline = L.polyline(segment.coords, { color: segment.color, weight: 6, opacity: 0.8 });
                     routeLayerGroup.addLayer(polyline);
                 });
-                
-                map.fitBounds(L.polyline(fullRouteCoords).getBounds(), { padding: [80, 80] });
-                
+                map.fitBounds(L.polyline(allRouteCoords).getBounds(), { padding: [80, 80] });
                 setStatus(
-                    "Rota çizildi. Toplam Mesafe: " + (totalRouteDistanceMeters / 1000).toFixed(0) + " km. Toplam Süre: " +
-                    (totalRouteDurationSeconds / 3600).toFixed(1) +
-                    " saat. POI panelini kullanabilirsiniz."
+                    "Rota çizildi. Toplam Mesafe: " + (totalDistanceMeters / 1000).toFixed(0) + " km. Toplam Süre (Molalar Dahil): " +
+                    (totalTimeSec / 3600).toFixed(1) +
+                    " saat (" + (totalBreakTimeSec / 60).toFixed(0) + " dakika mola dahil). POI panelini kullanabilirsiniz."
                 );
             } catch (err) {
                 console.error(err);
@@ -1023,7 +991,6 @@
                 setLoading(false);
             }
         }
-        
         function exportRoute(format) {
             if (!lastRouteGeoJSON) {
                 alert("Önce bir rota çizmelisiniz.");
@@ -1077,10 +1044,20 @@
             const newWarnPrecip = parseFloat(warnPrecipInput.value);
             const newDangerPrecip = parseFloat(dangerPrecipInput.value);
             SHOULD_SAVE_ROUTE = saveRouteToggle.checked;
+            
+            // YENİ MOLA AYARLARI
+            const newBreakDurationMin = parseFloat(breakDurationMinInput.value);
+            const newBreakIntervalHours = parseFloat(breakIntervalHoursInput.value);
+            
             if (!isNaN(newWarnWind) && newWarnWind > 0) WARNING_WIND = newWarnWind;
             if (!isNaN(newDangerWind) && newDangerWind > 0) DANGER_WIND = newDangerWind;
             if (!isNaN(newWarnPrecip) && newWarnPrecip >= 0) WARNING_PRECIP = newWarnPrecip;
             if (!isNaN(newDangerPrecip) && newDangerPrecip >= 0) DANGER_PRECIP = newDangerPrecip;
+            
+            // YENİ MOLA AYARLARI VALIDASYONU
+            if (!isNaN(newBreakDurationMin) && newBreakDurationMin > 0) BREAK_DURATION_MIN = newBreakDurationMin;
+            if (!isNaN(newBreakIntervalHours) && newBreakIntervalHours >= 1) BREAK_INTERVAL_HOURS = newBreakIntervalHours;
+            
             if (DANGER_WIND <= WARNING_WIND) {
                 alert("Yüksek Risk Rüzgar eşiği, Orta Risk eşiğinden büyük olmalıdır!");
                 fillSettingsInputs(); 
@@ -1091,16 +1068,18 @@
                  fillSettingsInputs(); 
                  return;
             }
+            
+            // TEMA AYARINI GÜNCELLE VE UYGULA
+            currentTheme = themeToggle.checked ? 'dark' : 'light';
+            applyTheme(currentTheme);
+            
             saveSettings();
             updateLegend();
             settingsModal.style.display = 'none';
-            setStatus(`Ayarlar kaydedildi. Kayıt Durumu: ${SHOULD_SAVE_ROUTE ? 'AÇIK' : 'KAPALI'}. Yeni rota çiziniz.`);
+            setStatus(`Ayarlar kaydedildi. Tema: ${currentTheme === 'dark' ? 'Koyu' : 'Açık'}. Yeni rota çiziniz.`);
         }
-        
-        // --- toggleGeolocation fonksiyonu (Güncellendi) ---
         function toggleGeolocation() {
              if (watchId) {
-                // Konum takibini durdur
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
                 if (trackingMarker) {
@@ -1109,50 +1088,36 @@
                 }
                 trackBtn.innerHTML = '<i class="fas fa-location-arrow"></i> Konum Takibi';
                 trackBtn.style.background = 'var(--color-primary)';
-                speedometerEl.textContent = ''; // Hız göstergesini temizle
                 setStatus("Konum takibi durduruldu.");
             } else {
-                // Konum takibini başlat
                 if (!navigator.geolocation) {
                     alert('Tarayıcınız konum servislerini desteklemiyor.');
                     return;
                 }
-                
-                // Rota çizimi yoksa kontrolleri küçültme
-                if (!lastRouteGeoJSON) controlsEl.classList.remove('minimized');
-                
+                routeLayerGroup.clearLayers(); 
+                controlsEl.classList.remove('minimized');
                 trackBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Başlatılıyor...';
                 trackBtn.style.background = '#888';
-                
                 const bikeIcon = L.icon({
                     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
                     iconSize: [25, 41],
                     iconAnchor: [12, 41],
                     popupAnchor: [1, -34]
                 });
-                
                 watchId = navigator.geolocation.watchPosition(
                     (position) => {
                         const latLng = [position.coords.latitude, position.coords.longitude];
-                        const speedKmh = position.coords.speed !== null ? (position.coords.speed * 3.6).toFixed(0) : "N/A";
-                        
-                        // Hız göstergesini güncelle
-                        speedometerEl.textContent = position.coords.speed !== null 
-                            ? `Hız: ${speedKmh} km/s` 
-                            : `Hız: N/A`;
-                            
                         if (!trackingMarker) {
                             trackingMarker = L.marker(latLng, {icon: bikeIcon}).addTo(map);
                             trackingMarker.bindPopup("<b>Şu Anki Konumunuz</b>").openPopup();
-                            map.setView(latLng, 16); // Yakından göstermek için zoom 16
+                            map.setView(latLng, 14);
                         } else {
                             trackingMarker.setLatLng(latLng);
-                            map.panTo(latLng); // Konumu takip et
+                            map.panTo(latLng); 
                         }
-                        
-                        trackBtn.innerHTML = '<i class="fas fa-crosshairs"></i> Takip Ediliyor'; // Buton ikonu değişti
+                        trackBtn.innerHTML = '<i class="fas fa-times-circle"></i> Takip Ediliyor';
                         trackBtn.style.background = 'var(--color-danger)';
-                        setStatus(`Konum güncellendi. Hız: ${speedKmh} km/s.`);
+                        setStatus(`Konum güncellendi. Doğruluk: ${position.coords.accuracy.toFixed(0)}m.`);
                     }, 
                     (error) => {
                         alert(`Konum hatası: ${error.message}`);
@@ -1167,22 +1132,17 @@
             }
         }
         
-        // --- Event Dinleyicileri (trackBtn güncellendi) ---
+        // --- Event Dinleyicileri ---
         routeBtn.addEventListener("click", handleRoute);
-        
-        trackBtn.addEventListener("click", () => {
-            if (watchId && trackingMarker) {
-                // Tracking aktifken butona tekrar tıklanırsa, haritayı mevcut konuma odakla (Yeniden ortalama)
-                map.setView(trackingMarker.getLatLng(), 16);
-                setStatus("Harita konuma yeniden odaklandı.");
-            } else {
-                // Tracking aktif değilse, başlat/durdur
-                toggleGeolocation();
-            }
-        });
-        
+        trackBtn.addEventListener("click", toggleGeolocation);
         settingsBtn.addEventListener('click', () => { fillSettingsInputs(); settingsModal.style.display = 'block'; });
         closeSettingsBtn.addEventListener('click', updateSettingsAndClose);
+        
+        // YENİ: TEMA TOGGLE ÖNİZLEME
+        themeToggle.addEventListener('change', () => {
+             // Ayarları kaydetmeden anlık tema önizlemesi
+            applyTheme(themeToggle.checked ? 'dark' : 'light');
+        });
         
         useStartLocBtn.addEventListener('click', () => {
              if (!navigator.geolocation) { alert('Tarayıcınız konum servislerini desteklemiyor.'); return; }
@@ -1196,7 +1156,6 @@
                 startInput.value = address;
                 
                 map.setView([lat, lon], 12);
-                routeLayerGroup.clearLayers(); 
                 L.marker([lat, lon], {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]})}).addTo(routeLayerGroup).bindPopup("Başlangıç Konumunuz").openPopup();
 
                 setStatus("Başlangıç konumu ayarlandı.");
