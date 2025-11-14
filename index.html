@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Moto Rota Hava Durumu</title>
+    <title>Moto Rota Hava Durumu - V3 (Sol Menü ve Fixler)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <link
@@ -67,6 +67,7 @@
             flex-direction: column;
             gap: 15px;
             transition: transform 0.3s ease-in-out;
+            flex-shrink: 0; /* Küçülmesini engelle */
         }
 
         #sidebar.collapsed {
@@ -117,7 +118,7 @@
             flex-grow: 2; 
         }
 
-        /* HARİTA GÖRÜNÜMÜ */
+        /* HARİTA GÖRÜNÜMÜ - Harita Yüklenmeme Fix'i */
         #map { 
             flex-grow: 1; /* Kalan tüm alanı kapla */
             width: 100%; 
@@ -168,7 +169,7 @@
             padding: 10px; 
             background: #222; 
             border-radius: 4px;
-            flex-direction: column; /* JS'te column olarak ayarlanıyordu, CSS'e taşıdık */
+            flex-direction: column; 
         } 
 
         .poi-button {
@@ -208,7 +209,7 @@
         }
 
 
-        /* MODAL VE AYARLAR CSS (Aynı Kaldı) */
+        /* MODAL VE AYARLAR CSS */
         #settingsModal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.95);
             color: var(--color-text); z-index: 1003; display: none; padding: 20px; overflow-y: auto; box-sizing: border-box;
@@ -256,12 +257,13 @@
             cursor: pointer; transition: background 0.2s;
         }
         .file-controls button:hover { background: #777; }
-        /* Geri kalan CSS */
+
         #status-container { width: 100%; padding: 5px 0 0; display: flex; align-items: center; }
         #status { font-size: 13px; color: #ccc; flex-grow: 1; }
         .leaflet-control-zoom { border-radius: 4px !important; box-shadow: 0 1px 5px rgba(0,0,0,0.4); }
         .leaflet-control-zoom-in, .leaflet-control-zoom-out { font-size: 18px !important; padding: 5px 8px !important; line-height: 1.2 !important; }
-        /* Mobil Cihazlar İçin Uyarlama */
+        
+        /* Mobil Cihazlar İçin Uyarlama (Menü Tam Ekran) */
         @media (max-width: 768px) {
             :root {
                 --sidebar-width: 100%; 
@@ -400,7 +402,7 @@
         const POI_SEARCH_BUFFER_KM = 2; 
         const MAX_POI_SAMPLES = 30; // Overpass API 504 hatasını önlemek için maksimum örnekleme noktası
         
-        // GEOLOCATION GÜNCELLEMESİ: Zaman aşımı süresi 1 dakikaya çıkarıldı
+        // GEOLOCATION GÜNCELLEMESİ: Zaman aşımı süresi 1 dakikaya çıkarıldı (Fix)
         const GEOLOCATION_TIMEOUT_MS = 60000; 
 
         // --- Global Değişkenler ---
@@ -424,9 +426,9 @@
             attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
         });
 
+        // HARİTA BAŞLATMA: DOM'a erişildikten sonra olmalı
         const map = L.map("map", { zoomControl: false, layers: [osmLayer] }); 
         importedRouteLayer.addTo(map); 
-        // POI Katmanları haritaya eklendi (Hata 4 için düzeltme)
         Object.values(poiLayerGroups).forEach(layer => layer.addTo(map));
 
 
@@ -607,7 +609,7 @@
         }
         document.getElementById('mapToggleBtn').addEventListener('click', toggleMapLayer);
         
-        // --- KENAR ÇUBUĞU AÇ/KAPA İŞLEVİ (Hata 5 Düzeltmesi) ---
+        // --- KENAR ÇUBUĞU AÇ/KAPA İŞLEVİ ---
         sidebarToggleBtn.addEventListener('click', () => {
             const isCollapsed = sidebarEl.classList.toggle('collapsed');
             sidebarToggleBtn.classList.toggle('sidebar-btn-collapsed', isCollapsed);
@@ -615,13 +617,14 @@
             const icon = isCollapsed ? 'fas fa-arrow-right' : 'fas fa-arrow-left';
             sidebarToggleBtn.innerHTML = `<i class="${icon}"></i>`;
             
+            // Harita boyutunu güncelle (Harita görünmeme sorununu da çözer)
             setTimeout(() => {
                  map.invalidateSize(true); 
             }, 300); 
         });
 
 
-        // --- POI ARAMA İŞLEVLERİ (Hata 1 ve 4 Düzeltmesi) ---
+        // --- POI ARAMA İŞLEVLERİ (100km aralıklarla) ---
         function buildOverpassQuery(poiType, routeGeoJSON, bufferKm) {
             if (!routeGeoJSON || !routeGeoJSON.features || routeGeoJSON.features.length === 0) return null;
 
@@ -756,9 +759,9 @@
                         const name = el.tags.name || 'İsimsiz Yer';
                         const type = el.tags.amenity || el.tags.tourism || poiType;
                         
-                        // Google Haritalar linki düzeltildi
+                        // Google Haritalar linki düzeltildi (POI Marker Pop-up Fix)
                         L.marker([lat, lon], { icon: poiIcon })
-                            .bindPopup(`<b>${name}</b><br/>Tip: ${type}<br/><a href="https://maps.google.com/?q=${lat},${lon}" target="_blank">Google Haritalar'da Aç</a>`)
+                            .bindPopup(`<b>${name}</b><br/>Tip: ${type}<br/><a href="http://maps.google.com/?q=${lat},${lon}" target="_blank">Google Haritalar'da Aç</a>`)
                             .addTo(layerGroup);
                         count++;
                     }
