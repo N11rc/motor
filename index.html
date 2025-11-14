@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Moto Rota Hava Durumu - V3 (Geliştirilmiş ve Hata Düzeltmeli)</title>
+    <title>Moto Rota Hava Durumu - V3 (Mobil UX Düzeltmesi)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <link
@@ -89,10 +89,7 @@
         #controls label {
             display: flex; flex-direction: column; font-size: 13px; flex-grow: 1; min-width: 140px; position: relative;
         }
-        @media (max-width: 768px) {
-            #controls label, #controls-inputs { width: 100%; }
-            #controls label { min-width: unset; }
-        }
+
         
         .location-button {
             position: absolute; right: 1px; top: 50%; transform: translateY(calc( -50% + 8px)); cursor: pointer;
@@ -165,20 +162,41 @@
         #speedLimit { color: #ccc; font-size: 14px; margin-top: 5px; }
         #currentSpeed.red-text { color: var(--color-danger); }
 
-        /* Mobil Cihazlar İçin Pozisyon Ayarı */
+        /* ---- KRİTİK MOBİL UYUMLULUK DÜZELTMESİ (768px Altı) ---- */
         @media (max-width: 768px) {
-            /* Üst Kontrol Çubuğunun minimum yüksekliği yaklaşık 100px */
-            #speedometer { top: 110px; right: 10px; } 
-            #mapToggleBtn { top: 110px; left: 10px; right: unset; } 
-            #poiControls { top: 160px; } 
-            .leaflet-top.leaflet-right { top: 250px !important; } 
-        }
-        @media (min-width: 769px) {
-             #speedometer { top: 10px; }
-             #mapToggleBtn { top: 110px; }
-             #poiControls { top: 160px; }
+            /* Mobil görünümde, girişlerin tam genişliği kaplaması */
+            #controls label, #controls-inputs { width: 100%; }
+            #controls label { min-width: unset; }
+            
+            /* 1. MAXIMIZE durumda (Rota çizilmediğinde), 250px kontrol çubuğunun altından başlat */
+            /* Yüzen butonlar başlangıçta 250px + 10px boşluk = 260px'ten başlar */
+            #mapToggleBtn, #poiControls, #speedometer {
+                top: 260px; 
+                right: 10px;
+            }
+            #mapToggleBtn { left: 10px; right: unset; } 
+            #poiControls { top: 310px; } 
+
+            /* Leaflet Sağ Üst Kontrol Pozisyonu (Zoom vb.) */
+            .leaflet-top.leaflet-right { top: 380px !important; } 
+
+            /* 2. MINIMIZE durumda (Rota çizildikten sonra) - Yüzen butonları yukarı kaydır */
+            /* Kontrol çubuğu 100px civarına iner. Butonlar 110px'ten başlar. (SADECE SİBLİNG OLARAK) */
+            #controls.minimized ~ #mapToggleBtn,
+            #controls.minimized ~ #speedometer {
+                top: 110px; 
+            }
+            #controls.minimized ~ #poiControls {
+                top: 170px; 
+            }
         }
 
+        /* Desktop için standart pozisyonlar (769px ve üzeri) */
+        @media (min-width: 769px) {
+             #speedometer { top: 10px; }
+             #mapToggleBtn { top: 110px; } 
+             #poiControls { top: 170px; }
+        }
 
         .poi-button {
             background: #333;
@@ -694,7 +712,7 @@
             customLegend = L.control({ position: "bottomright" });
             customLegend.onAdd = function () {
                 const div = L.DomUtil.create("div", "legend");
-                // Harita temasını yansıtması için stil eklendi
+                // Harita temasını yansıması için stil eklendi
                 div.style.background = CURRENT_THEME === 'light-mode' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(17, 17, 17, 0.8)';
                 div.style.color = CURRENT_THEME === 'light-mode' ? '#333' : '#eee';
                 div.innerHTML = `
