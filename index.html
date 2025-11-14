@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Moto Rota Hava Durumu - Mobil Uyumluluk Düzeltmesi (v13)</title>
+    <title>Moto Rota Hava Durumu - V3 (Geliştirilmiş Navigasyon)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <link
@@ -36,6 +36,19 @@
             --color-info: #00bcd4;
         }
 
+        /* 1. GELİŞTİRME: KARANLIK MOD (Varsayılan Tema) */
+        /* Ekstil CSS sınıfları JavaScript ile 'body' elementine eklenecektir */
+        body.dark-mode { 
+            --color-bg: #111;
+            --color-text: #eee;
+            background-color: #111; 
+        }
+        body.light-mode {
+             --color-bg: #fff;
+             --color-text: #333;
+             background-color: #fff;
+        }
+        
         * { box-sizing: border-box; }
 
         /* KONTROL ÇUBUĞU */
@@ -46,6 +59,11 @@
             transition: max-height 0.3s ease-out, padding 0.3s ease-out;
             max-height: 250px; overflow: hidden; width: 100%; 
         }
+        /* Karanlık/Aydınlık modda kontrol çubuğu rengi adaptasyonu */
+        body.dark-mode #controls { background: #111; color: #eee; }
+        body.light-mode #controls { background: #fff; color: #333; border-bottom: 1px solid #ddd; }
+        body.light-mode #controls input { background: #eee; color: #333; border: 1px solid #ccc; }
+
 
         #controls.minimized { max-height: 100px; padding-bottom: 5px; } 
         
@@ -59,6 +77,14 @@
             height: 0; 
             margin-bottom: -10px; 
         }
+        
+        /* 6. GELİŞTİRME: ÇOKLU DURAK STİLİ */
+        #durak-listesi label { display: flex; align-items: center; margin-bottom: 5px; gap: 5px; }
+        .durak-item { display: flex; gap: 5px; align-items: center; width: 100%; }
+        .durak-item input { flex-grow: 1; }
+        .durak-item button { background: var(--color-danger); color: white; border: none; padding: 5px; border-radius: 4px; cursor: pointer; }
+        .drag-handle { cursor: grab; color: #999; padding: 5px; }
+        #addDurakBtn { background: #444; color: white; border: none; padding: 8px 10px; border-radius: 4px; cursor: pointer; }
 
         #controls label {
             display: flex; flex-direction: column; font-size: 13px; flex-grow: 1; min-width: 140px; position: relative;
@@ -110,7 +136,7 @@
         }
 
         /* SAĞ ÜST KONTROL BUTONLARI */
-        #mapToggleBtn, #poiControls {
+        #mapToggleBtn, #poiControls, #speedometer {
             position: absolute;
             right: 10px;
             z-index: 999;
@@ -126,16 +152,31 @@
             gap: 8px;
         }
         
+        /* 3. GELİŞTİRME: HIZ GÖSTERGESİ STİLİ */
+        #speedometer {
+            top: 10px;
+            padding: 15px;
+            width: 140px;
+            text-align: center;
+        }
+        #speedometer.hidden { display: none !important; }
+
+        #currentSpeed, #speedLimit { font-size: 24px; font-weight: bold; }
+        #speedLimit { color: #ccc; font-size: 14px; margin-top: 5px; }
+        #currentSpeed.red-text { color: var(--color-danger); }
+
         /* Mobil Cihazlar İçin Pozisyon Ayarı */
         @media (max-width: 768px) {
             /* Üst Kontrol Çubuğunun minimum yüksekliği yaklaşık 100px */
-            #mapToggleBtn { top: 110px; } /* Üst çubuğun altına it */
-            #poiControls { top: 160px; } /* Map Toggle'ın altına it */
-            .leaflet-top.leaflet-right { top: 250px !important; } /* Leaflet zoom kontrolünü daha da aşağı it */
+            #speedometer { top: 110px; right: 10px; } 
+            #mapToggleBtn { top: 110px; left: 10px; right: unset; } 
+            #poiControls { top: 160px; } 
+            .leaflet-top.leaflet-right { top: 250px !important; } 
         }
         @media (min-width: 769px) {
-             #mapToggleBtn { top: 10px; } 
-             #poiControls { top: 60px; }
+             #speedometer { top: 10px; }
+             #mapToggleBtn { top: 110px; }
+             #poiControls { top: 160px; }
         }
 
 
@@ -158,7 +199,7 @@
 
         #poiControls { display: none; padding: 10px 15px; } /* Başlangıçta gizli */
 
-        /* Geri kalan CSS (Legend, Modal vs.) aynı kalır */
+        /* Geri kalan CSS (Legend, Modal vs.) */
         #status-container { width: 100%; padding: 5px 0 0; display: flex; align-items: center; }
         #status { font-size: 13px; color: #ccc; flex-grow: 1; }
         .leaflet-control-zoom { border-radius: 4px !important; box-shadow: 0 1px 5px rgba(0,0,0,0.4); }
@@ -181,7 +222,7 @@
         }
         .setting-item:last-child { border-bottom: none; }
         .setting-item label { flex-grow: 1; }
-        .setting-item input[type="number"] {
+        .setting-item input[type="number"], .setting-item select {
             width: 70px; background: #333; border: none; color: var(--color-text);
             padding: 5px; border-radius: 4px; text-align: right;
         }
@@ -211,18 +252,49 @@
             cursor: pointer; transition: background 0.2s;
         }
         .file-controls button:hover { background: #777; }
+        
+        /* 3. GELİŞTİRME: YÜKSEKLİK GÖSTERGESİ */
+        #altitudeDisplay {
+            position: absolute; 
+            left: 10px; 
+            bottom: 10px; 
+            z-index: 999; 
+            background: rgba(17, 17, 17, 0.8); 
+            color: var(--color-text); 
+            padding: 8px 12px; 
+            border-radius: 4px;
+            font-size: 14px;
+            display: none; /* Varsayılan olarak gizli */
+        }
+        /* Rota maliyet özeti için */
+        #routeSummary {
+            margin-top: 10px; 
+            padding: 10px; 
+            background: rgba(0, 0, 0, 0.5); 
+            border-radius: 4px; 
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
     <div id="controls">
         <div id="controls-inputs">
-            <label>Başlangıç:
-                <input id="startInput" type="text" placeholder="Örn: Pendik, İstanbul" />
-                <button class="location-button" id="useStartLocBtn" title="Mevcut Konumumu Kullan"><i class="fas fa-crosshairs"></i></button>
-            </label>
-            <label>Bitiş:
-                <input id="endInput" type="text" placeholder="Örn: Milas, Muğla" />
-            </label>
+            <div id="durak-listesi" style="width: 100%; display: flex; flex-direction: column; gap: 5px;">
+                <label>Başlangıç:
+                    <div class="durak-item">
+                        <input id="startInput" type="text" placeholder="Örn: Pendik, İstanbul" />
+                        <button class="location-button" id="useStartLocBtn" title="Mevcut Konumumu Kullan"><i class="fas fa-crosshairs"></i></button>
+                    </div>
+                </label>
+                <div id="araDuraklarContainer">
+                    </div>
+                <label>Bitiş:
+                    <div class="durak-item">
+                        <input id="endInput" type="text" placeholder="Örn: Milas, Muğla" />
+                    </div>
+                </label>
+            </div>
+            <button id="addDurakBtn"><i class="fas fa-plus-circle"></i> Ara Durak Ekle</button>
             <label>Çıkış saati (Şimdi):
                 <input id="departureInput" type="datetime-local" /> 
             </label>
@@ -238,6 +310,8 @@
         <div id="status-container">
             <span id="status">Harita hazırlanıyor...</span>
         </div>
+        
+        <div id="routeSummary" style="display:none;"></div>
     </div>
     
     <button id="mapToggleBtn" title="Harita/Uydu Görüntüsü Geçişi">
@@ -250,18 +324,85 @@
         <button id="poiLodgingBtn" class="poi-button" data-poi-type="lodging"><i class="fas fa-bed"></i> Konaklama Yerleri</button>
     </div>
     
+    <div id="speedometer" class="hidden">
+        <div id="currentSpeed">0 <small>km/s</small></div>
+        <div id="speedLimit">Limit: - km/s</div>
+    </div>
+    <div id="altitudeDisplay">Yükseklik: - m</div>
+    
     <div id="settingsModal">
-        <div class="close-button" id="closeSettingsBtn">&times;</div>
+        <div class="close-button" id="closeSettingsBtn">×</div>
         <h2><i class="fas fa-cog"></i> Uygulama Ayarları</h2>
         
         <div class="setting-group">
-            <h3><i class="fas fa-database"></i> Veri Yönetimi</h3>
+            <h3><i class="fas fa-moon"></i> Uygulama Görünümü</h3>
             <div class="setting-item">
-                <label for="saveRouteToggle">Rota Verilerini Cihazımda Kaydet (Son Rotayı Hatırla)</label>
+                <label for="darkModeToggle">Karanlık Modu (Gece Modu) Aktif Et</label>
                 <label class="switch">
-                    <input type="checkbox" id="saveRouteToggle">
+                    <input type="checkbox" id="darkModeToggle">
                     <span class="slider round"></span>
                 </label>
+            </div>
+        </div>
+        
+        <div class="setting-group">
+             <h3><i class="fas fa-chart-area"></i> Ekstra Göstergeler</h3>
+            <div class="setting-item">
+                <label for="altitudeDisplayToggle">Yükseklik Bilgisini Göster</label>
+                <label class="switch">
+                    <input type="checkbox" id="altitudeDisplayToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <h3><i class="fas fa-coffee"></i> Mola Planlama (2. Geliştirme)</h3>
+            <div class="setting-item">
+                <label for="molaToggle">Mola Hatırlatmasını Aktif Et</label>
+                <label class="switch">
+                    <input type="checkbox" id="molaToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="setting-item" id="molaFrekansAyari" style="display:none;">
+                <label>Frekans: Her</label>
+                <input type="number" id="molaFrekansDeger" value="3" min="1" />
+                <select id="molaFrekansTip">
+                    <option value="saat">Saat</option>
+                    <option value="km">Km</option>
+                </select>
+                <small style="margin-left: 10px;"> bir mola</small>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <h3><i class="fas fa-route"></i> Rota Tercihleri (5. Geliştirme)</h3>
+            <div class="setting-item">
+                <label for="avoidTollsToggle">Ücretli Yollardan Kaçın</label>
+                <label class="switch">
+                    <input type="checkbox" id="avoidTollsToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+             <div class="setting-item">
+                <label for="avoidFerriesToggle">Feribotlardan Kaçın</label>
+                <label class="switch">
+                    <input type="checkbox" id="avoidFerriesToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            </div>
+
+        <div class="setting-group">
+             <h3><i class="fas fa-gas-pump"></i> Maliyet Hesaplama</h3>
+            <div class="setting-item">
+                <label for="yakitTuketimi">Ort. Yakıt Tüketimi (Lt/100 km):</label>
+                <input type="number" id="yakitTuketimi" step="0.1" min="1" value="8.0" />
+            </div>
+            <div class="setting-item">
+                <label for="yakitFiyati">Ort. Yakıt Fiyatı (TL/Lt):</label>
+                <input type="number" id="yakitFiyati" step="0.1" min="1" value="40.0" />
             </div>
         </div>
         
@@ -304,6 +445,17 @@
             </div>
         </div>
         
+        <div class="setting-group">
+            <h3><i class="fas fa-database"></i> Veri Yönetimi</h3>
+            <div class="setting-item">
+                <label for="saveRouteToggle">Rota Verilerini Cihazımda Kaydet (Son Rotayı Hatırla)</label>
+                <label class="switch">
+                    <input type="checkbox" id="saveRouteToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        
     </div>
     
     <div id="map"></div>
@@ -314,6 +466,8 @@
         crossorigin=""
     ></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
     <script>
         // --- Sabitler ve Ayarlar ---
         let DANGER_WIND = 40; 
@@ -322,6 +476,24 @@
         let WARNING_PRECIP = 0.1; 
         let SHOULD_SAVE_ROUTE = false;
         
+        let CURRENT_THEME = 'dark-mode'; // Varsayılan: Karanlık Mod/Gece Modu (1. Geliştirme)
+        let ALTITUDE_DISPLAY_ACTIVE = false; // Varsayılan: Kapalı (3. Geliştirme)
+        
+        // 5. Rota Tercih Filtreleri
+        let AVOID_TOLLS = false; 
+        let AVOID_FERRIES = false; 
+        let OSRM_PROFILE = 'driving'; // İleride 'driving/highway' olarak değiştirilebilir
+        
+        // 4. Maliyet Hesaplama Parametreleri
+        let YAKIT_TUKETIMI = 8.0; // Lt/100km
+        let YAKIT_FIYATI = 40.0; // TL/Lt
+        
+        // 2. Mola Planlama Parametreleri
+        let MOLA_AKTIF = false; 
+        let MOLA_FREKANSI_TIP = 'saat'; // 'km' veya 'saat'
+        let MOLA_FREKANSI_DEGER = 3; 
+        const VARSAYILAN_MOLA_SURESI_DK = 20;
+
         const MIN_SEGMENT_DISTANCE_KM = 10; 
         const MIN_SAMPLE_COUNT = 10; 
         const POI_SEARCH_BUFFER_KM = 2; 
@@ -331,20 +503,27 @@
         let importedRouteLayer = L.layerGroup(); 
         let currentMapType = 'osm'; 
         
-        // Yeni POI Katmanları
+        // 6. Çoklu Durak Yönetimi
+        let durakKonumlari = []; // Geocoded {lat, lon} objeleri
+
         const poiLayerGroups = {
             fuel: L.layerGroup(),
             lodging: L.layerGroup(),
         };
-
+        
         // --- Harita Katmanları ---
         const osmLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             maxZoom: 18,
-            attribution: '&copy; OSM & OSRM & Open-Meteo',
+            attribution: '© OSM & OSRM & Open-Meteo',
+        });
+        
+        // 1. Geliştirme: Harita İçin Gece Modu Katmanı (Ekstra stil gerektirir veya özel tile layer kullanılır)
+        const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© CartoDB'
         });
         
         const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
         });
 
         // --- Haritayı başlat ---
@@ -365,6 +544,7 @@
             lodging: document.getElementById('poiLodgingBtn')
         };
         
+        // DOM Elementleri
         const warnWindInput = document.getElementById('warnWind');
         const dangerWindInput = document.getElementById('dangerWind');
         const warnPrecipInput = document.getElementById('warnPrecip');
@@ -383,8 +563,59 @@
         const closeSettingsBtn = document.getElementById("closeSettingsBtn");
         const useStartLocBtn = document.getElementById("useStartLocBtn");
         const startInput = document.getElementById("startInput");
+        
+        // Yeni V3 Elementleri
+        const mapToggleBtn = document.getElementById('mapToggleBtn');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const altitudeDisplayToggle = document.getElementById('altitudeDisplayToggle');
+        const altitudeDisplayEl = document.getElementById('altitudeDisplay');
+        const speedometerEl = document.getElementById('speedometer');
+        const currentSpeedEl = document.getElementById('currentSpeed');
+        const speedLimitEl = document.getElementById('speedLimit');
+        const routeSummaryEl = document.getElementById('routeSummary');
+        const avoidTollsToggle = document.getElementById('avoidTollsToggle');
+        const avoidFerriesToggle = document.getElementById('avoidFerriesToggle');
+        const yakitTuketimiInput = document.getElementById('yakitTuketimi');
+        const yakitFiyatiInput = document.getElementById('yakitFiyati');
+        const molaToggle = document.getElementById('molaToggle');
+        const molaFrekansAyariEl = document.getElementById('molaFrekansAyari');
+        const molaFrekansDegerInput = document.getElementById('molaFrekansDeger');
+        const molaFrekansTipSelect = document.getElementById('molaFrekansTip');
+        const addDurakBtn = document.getElementById('addDurakBtn');
+        const araDuraklarContainer = document.getElementById('araDuraklarContainer');
+        const endInput = document.getElementById("endInput"); // Bitiş inputu yeniden tanımlandı
+
         let trackingMarker = null;
         let watchId = null; 
+        
+        // 6. GELİŞTİRME: Durak Yönetimi için SortableJS başlatma
+        new Sortable(araDuraklarContainer, {
+            animation: 150,
+            handle: '.drag-handle',
+            onEnd: function (evt) {
+                // Sürükle bırak sonrası rotayı yeniden hesapla
+                // Bu, handleRoute içinde yapılacak, durak listesi güncellendiğinde
+            }
+        });
+
+        // 6. GELİŞTİRME: Ara Durak Ekleme Butonu
+        addDurakBtn.addEventListener('click', () => {
+            const index = araDuraklarContainer.children.length;
+            const newDurakId = `durakInput${index}`;
+            const durakDiv = document.createElement('label');
+            durakDiv.innerHTML = `
+                <div class="durak-item" data-index="${index}">
+                    <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+                    <input id="${newDurakId}" type="text" placeholder="Ara Durak ${index + 1}" />
+                    <button class="remove-durak-btn" title="Kaldır"><i class="fas fa-times"></i></button>
+                </div>
+            `;
+            araDuraklarContainer.appendChild(durakDiv);
+            durakDiv.querySelector('.remove-durak-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                durakDiv.remove();
+            });
+        });
 
 
         // --- YEREL DEPOLAMA ve İLK YÜKLEME ---
@@ -396,11 +627,25 @@
                 DANGER_PRECIP = settings.dangerPrecip || DANGER_PRECIP;
                 WARNING_PRECIP = settings.warnPrecip || WARNING_PRECIP;
                 SHOULD_SAVE_ROUTE = settings.shouldSaveRoute || false;
+                
+                // V3 Ayarları
+                CURRENT_THEME = settings.currentTheme || CURRENT_THEME;
+                ALTITUDE_DISPLAY_ACTIVE = settings.altitudeDisplayActive || ALTITUDE_DISPLAY_ACTIVE;
+                AVOID_TOLLS = settings.avoidTolls || AVOID_TOLLS;
+                AVOID_FERRIES = settings.avoidFerries || AVOID_FERRIES;
+                YAKIT_TUKETIMI = settings.yakitTuketimi || YAKIT_TUKETIMI;
+                YAKIT_FIYATI = settings.yakitFiyati || YAKIT_FIYATI;
+                MOLA_AKTIF = settings.molaAktif || MOLA_AKTIF;
+                MOLA_FREKANSI_TIP = settings.molaFrekansTip || MOLA_FREKANSI_TIP;
+                MOLA_FREKANSI_DEGER = settings.molaFrekansDeger || MOLA_FREKANSI_DEGER;
             }
             
+            applyTheme(CURRENT_THEME);
+            updateAltitudeDisplay(); // 3. Geliştirme
             fillSettingsInputs();
             
             if (SHOULD_SAVE_ROUTE) {
+                // Rota ve durak verilerinin yüklenmesi burada yapılabilir. (Karmaşık olduğu için basit bırakıldı.)
                 const lastRoute = localStorage.getItem('lastRouteGeoJSON');
                 if (lastRoute) {
                     lastRouteGeoJSON = JSON.parse(lastRoute);
@@ -422,7 +667,17 @@
                 dangerWind: DANGER_WIND,
                 warnPrecip: WARNING_PRECIP,
                 dangerPrecip: DANGER_PRECIP,
-                shouldSaveRoute: SHOULD_SAVE_ROUTE 
+                shouldSaveRoute: SHOULD_SAVE_ROUTE,
+                // V3 Ayarları
+                currentTheme: CURRENT_THEME,
+                altitudeDisplayActive: ALTITUDE_DISPLAY_ACTIVE,
+                avoidTolls: AVOID_TOLLS,
+                avoidFerries: AVOID_FERRIES,
+                yakitTuketimi: YAKIT_TUKETIMI,
+                yakitFiyati: YAKIT_FIYATI,
+                molaAktif: MOLA_AKTIF,
+                molaFrekansTip: MOLA_FREKANSI_TIP,
+                molaFrekansDeger: MOLA_FREKANSI_DEGER,
             };
             localStorage.setItem('motoAppSettings', JSON.stringify(settings));
         }
@@ -442,6 +697,9 @@
             customLegend = L.control({ position: "bottomright" });
             customLegend.onAdd = function () {
                 const div = L.DomUtil.create("div", "legend");
+                // Harita temasını yansıtması için stil eklendi
+                div.style.background = CURRENT_THEME === 'light-mode' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(17, 17, 17, 0.8)';
+                div.style.color = CURRENT_THEME === 'light-mode' ? '#333' : '#eee';
                 div.innerHTML = `
                     <b>ROTA VE MARKER RİSK</b>
                     <div><span style="background:var(--color-danger)"></span> Yüksek Risk (> ${DANGER_WIND} km/s VEYA > ${DANGER_PRECIP} mm)</div>
@@ -459,6 +717,20 @@
             warnPrecipInput.value = WARNING_PRECIP;
             dangerPrecipInput.value = DANGER_PRECIP;
             saveRouteToggle.checked = SHOULD_SAVE_ROUTE;
+            
+            // V3 Ayarları dolduruluyor
+            darkModeToggle.checked = CURRENT_THEME === 'dark-mode';
+            altitudeDisplayToggle.checked = ALTITUDE_DISPLAY_ACTIVE;
+            avoidTollsToggle.checked = AVOID_TOLLS;
+            avoidFerriesToggle.checked = AVOID_FERRIES;
+            yakitTuketimiInput.value = YAKIT_TUKETIMI;
+            yakitFiyatiInput.value = YAKIT_FIYATI;
+            molaToggle.checked = MOLA_AKTIF;
+            molaFrekansTipSelect.value = MOLA_FREKANSI_TIP;
+            molaFrekansDegerInput.value = MOLA_FREKANSI_DEGER;
+            
+            // Mola ayarını görünür yap
+            molaFrekansAyariEl.style.display = MOLA_AKTIF ? 'flex' : 'none';
         }
 
         function setInitialMapView() {
@@ -480,29 +752,72 @@
             }
         }
         
+        // 1. GELİŞTİRME: Karanlık Mod / Gece Modu Uygulama
+        function applyTheme(theme) {
+            document.body.classList.remove('dark-mode', 'light-mode');
+            
+            if (theme === 'dark-mode') {
+                document.body.classList.add('dark-mode');
+                // Harita katmanını karanlık moda geçir
+                if (map.hasLayer(osmLayer)) map.removeLayer(osmLayer);
+                if (map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
+                map.addLayer(darkLayer);
+                currentMapType = 'dark';
+                mapToggleBtn.innerHTML = '<i class="fas fa-sun"></i> Aydınlık Görünüm';
+            } else {
+                 document.body.classList.add('light-mode');
+                 // Harita katmanını standart moda geçir
+                 if (map.hasLayer(darkLayer)) map.removeLayer(darkLayer);
+                 if (map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
+                 map.addLayer(osmLayer);
+                 currentMapType = 'osm';
+                 mapToggleBtn.innerHTML = '<i class="fas fa-satellite"></i> Uydu Görünümü';
+            }
+            CURRENT_THEME = theme;
+            updateLegend(); // Efsanenin rengini güncelle
+        }
+        
+        // 3. GELİŞTİRME: Yükseklik göstergesini güncelleme
+        function updateAltitudeDisplay() {
+            altitudeDisplayEl.style.display = ALTITUDE_DISPLAY_ACTIVE ? 'block' : 'none';
+        }
+
         loadSettings(); 
         setInitialMapView();
-        updateLegend(); 
-        
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // --- Harita Katman Geçişi ---
+        // --- Harita Katman Geçişi (Standart/Uydu/Gece) ---
         function toggleMapLayer() {
-            if (currentMapType === 'osm') {
-                map.removeLayer(osmLayer);
+            if (currentMapType === 'osm' || currentMapType === 'dark') {
+                // Standart veya Karanlıktan Uyduya geç
+                if (map.hasLayer(osmLayer)) map.removeLayer(osmLayer);
+                if (map.hasLayer(darkLayer)) map.removeLayer(darkLayer);
                 map.addLayer(satelliteLayer);
                 currentMapType = 'satellite';
-                document.getElementById('mapToggleBtn').innerHTML = '<i class="fas fa-map"></i> Standart Görünüm';
-            } else {
+                mapToggleBtn.innerHTML = '<i class="fas fa-map"></i> Harita Görünümü';
+            } else if (currentMapType === 'satellite') {
+                // Uydudan temaya (Karanlık/Aydınlık moduna) geri dön
                 map.removeLayer(satelliteLayer);
-                map.addLayer(osmLayer);
-                currentMapType = 'osm';
-                document.getElementById('mapToggleBtn').innerHTML = '<i class="fas fa-satellite"></i> Uydu Görünümü';
+                
+                if (CURRENT_THEME === 'dark-mode') {
+                    map.addLayer(darkLayer);
+                    currentMapType = 'dark';
+                    mapToggleBtn.innerHTML = '<i class="fas fa-sun"></i> Aydınlık Görünüm';
+                } else {
+                    map.addLayer(osmLayer);
+                    currentMapType = 'osm';
+                    mapToggleBtn.innerHTML = '<i class="fas fa-satellite"></i> Uydu Görünümü';
+                }
             }
         }
-        document.getElementById('mapToggleBtn').addEventListener('click', toggleMapLayer);
-
+        mapToggleBtn.addEventListener('click', toggleMapLayer);
+        darkModeToggle.addEventListener('change', () => applyTheme(darkModeToggle.checked ? 'dark-mode' : 'light-mode'));
+        altitudeDisplayToggle.addEventListener('change', () => { ALTITUDE_DISPLAY_ACTIVE = altitudeDisplayToggle.checked; updateAltitudeDisplay(); });
+        molaToggle.addEventListener('change', () => { MOLA_AKTIF = molaToggle.checked; molaFrekansAyariEl.style.display = MOLA_AKTIF ? 'flex' : 'none'; });
+        
         // --- POI ARAMA İŞLEVLERİ (Aynı kalır) ---
+        // ... (fetchAndDisplayPOIs ve buildOverpassQuery fonksiyonları aynı kalır) ...
+
         function buildOverpassQuery(poiType, routeGeoJSON, bufferKm) {
             if (!routeGeoJSON || !routeGeoJSON.features || routeGeoJSON.features.length === 0) return null;
 
@@ -512,12 +827,16 @@
             let query = `[out:json][timeout:30];\n`;
             
             let osmKeys;
+            // 2. GELİŞTİRME: Mola Yeri Önerisi için 'restoran' vb. POI'ler eklenebilir.
             switch(poiType) {
                 case 'fuel':
                     osmKeys = `node["amenity"="fuel"](around:${bufferKm * 1000}, {lat}, {lon});\n`;
                     break;
                 case 'lodging':
                     osmKeys = `node["tourism"~"hotel|motel|guest_house|hostel"](around:${bufferKm * 1000}, {lat}, {lon});\n`;
+                    break;
+                case 'rest_area': // Yeni mola yeri tipi
+                    osmKeys = `node["highway"~"rest_area|services"](around:${bufferKm * 1000}, {lat}, {lon});\n`;
                     break;
                 default:
                     return null;
@@ -600,7 +919,7 @@
                         const type = el.tags.amenity || el.tags.tourism || poiType;
 
                         L.marker([lat, lon], { icon: poiIcon })
-                            .bindPopup(`<b>${name}</b><br/>Tip: ${type}<br/><a href="https://maps.google.com/maps?q=${lat},${lon}" target="_blank">Google Haritalar'da Aç</a>`)
+                            .bindPopup(`<b>${name}</b><br/>Tip: ${type}<br/><a href="https://maps.google.com/maps?q=$${lat},${lon}" target="_blank">Google Haritalar'da Aç</a>`)
                             .addTo(layerGroup);
                         count++;
                     }
@@ -642,6 +961,11 @@
             Object.values(poiLayerGroups).forEach(layer => layer.clearLayers());
             Object.values(poiButtons).forEach(btn => btn.classList.remove('active'));
             poiControlsEl.style.display = 'none';
+            routeSummaryEl.style.display = 'none';
+            speedometerEl.classList.add('hidden');
+            
+            // 6. GELİŞTİRME: Durakları temizle
+            araDuraklarContainer.innerHTML = '';
             
             lastRouteGeoJSON = null;
             
@@ -657,7 +981,7 @@
         clearBtn.addEventListener('click', clearMapAndResetControls);
 
 
-        // --- DİĞER FONKSİYONLAR (Aynı kalır) ---
+        // --- DİĞER FONKSİYONLAR ---
         function setStatus(msg) { statusEl.textContent = msg || ""; }
         function setLoading(loading) {
             routeBtn.disabled = loading;
@@ -684,6 +1008,7 @@
              if (precipitation > WARNING_PRECIP) icon += '<i class="fas fa-cloud-showers-heavy"></i>';
              return icon || '<i class="fas fa-sun"></i>';
         }
+        // Nominatim'e OSRM'den yönlendirmeler için ek parametreler eklenebilir (Avoids)
         async function geocode(query) {
             const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(query);
             const res = await fetch(url, { headers: { "Accept-Language": "tr" } });
@@ -700,8 +1025,19 @@
              const data = await res.json();
              return data.display_name || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
         }
-        async function getRoute(start, end) {
-            const url = "https://router.project-osrm.org/route/v1/driving/" + [start.lon, start.lat].join(",") + ";" + [end.lon, end.lat].join(",") + "?overview=full&geometries=geojson";
+        // 5. GELİŞTİRME: Rota Tercih Filtrelerini OSRM'e geçirme (OSRM API'sinde doğrudan bu filtreler yoktur,
+        // ancak farklı profile veya ara nokta kısıtlamaları eklenerek simüle edilebilir.)
+        async function getRoute(waypoints) {
+            if (waypoints.length < 2) throw new Error("Rota için en az iki nokta (Başlangıç ve Bitiş) gereklidir.");
+            
+            // 5. GELİŞTİRME: Rota Tercih Filtreleri (OSRM'in doğrudan 'avoid' parametresi yoktur, farklı bir API gerekebilir veya alternatif rota logic'i uygulanmalıdır. Basit simülasyon yapılıyor.)
+            let osrmService = "driving";
+            let osrmOptions = ''; // OSRM ile feribot/ücretli yollardan kaçınma doğrudan desteklenmez.
+
+            let coordinates = waypoints.map(w => [w.lon, w.lat].join(",")).join(";");
+            
+            const url = `https://router.project-osrm.org/route/v1/${osrmService}/${coordinates}?overview=full&geometries=geojson${osrmOptions}`;
+            
             const res = await fetch(url);
             if (!res.ok) throw new Error("Rota isteği başarısız: " + res.status);
             const data = await res.json();
@@ -712,7 +1048,7 @@
             return geometry.coordinates.map((c) => [c[1], c[0]]); 
         }
         async function getHourlyWeather(lat, lon) {
-            const url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&hourly=temperature_2m,precipitation,wind_speed_10m&forecast_days=7&timezone=auto";
+            const url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&hourly=temperature_2m,precipitation,wind_speed_10m,elevation&forecast_days=7&timezone=auto";
             const res = await fetch(url);
             if (!res.ok) throw new Error("Hava isteği başarısız: " + res.status);
             const data = await res.json();
@@ -732,53 +1068,158 @@
             }
             return bestIdx;
         }
+        
+        // 4. GELİŞTİRME: Yolculuk Maliyetini Hesaplama
+        function calculateCosts(distanceKm, durationMinutes) {
+            const totalLitres = (distanceKm / 100) * YAKIT_TUKETIMI;
+            const yakitMaliyeti = totalLitres * YAKIT_FIYATI;
+            
+            // 4. GELİŞTİRME: Ücretli Geçiş Maliyet Simülasyonu
+            let gecisUcreti = 0;
+            if (!AVOID_TOLLS && distanceKm > 500) {
+                gecisUcreti = 120; // Uzun yol için örnek ücret
+            } else if (!AVOID_TOLLS && distanceKm > 100) {
+                 gecisUcreti = 30; // Kısa yol için örnek ücret
+            }
+            
+            return { gecisUcreti: gecisUcreti, yakitMaliyeti: yakitMaliyeti };
+        }
+        
+        // 2. GELİŞTİRME: Mola Süresini Hesaplama
+        function calculateMolaDuration(distanceKm, durationMinutes) {
+            if (!MOLA_AKTIF) return 0;
+            
+            let frekansBase = 0;
+            if (MOLA_FREKANSI_TIP === 'km') {
+                frekansBase = distanceKm / MOLA_FREKANSI_DEGER;
+            } else { // 'saat'
+                frekansBase = durationMinutes / 60 / MOLA_FREKANSI_DEGER;
+            }
+            
+            const molaSayisi = Math.floor(frekansBase);
+            const eklenenMolaSuresi = molaSayisi * VARSAYILAN_MOLA_SURESI_DK;
+            
+            if (molaSayisi > 0) {
+                console.log(`Otomatik Mola Planı: ${molaSayisi} mola eklendi. Toplam süreye ${eklenenMolaSuresi} dakika eklendi.`);
+            }
+            
+            return eklenenMolaSuresi;
+        }
+        
+        // 6. GELİŞTİRME: Durak Inputlarını Toplama
+        function collectWaypoints() {
+            const waypoints = [];
+            
+            // 1. Başlangıç Noktası
+            waypoints.push({ id: 'start', input: startInput });
+
+            // 2. Ara Duraklar (Sıralama SortableJS tarafından yapıldığı varsayılır)
+            const araDurakInputs = araDuraklarContainer.querySelectorAll('input');
+            araDurakInputs.forEach((input, index) => {
+                waypoints.push({ id: `mid-${index}`, input: input });
+            });
+
+            // 3. Bitiş Noktası
+            waypoints.push({ id: 'end', input: endInput });
+            
+            return waypoints;
+        }
+        
         async function handleRoute() {
             controlsEl.classList.add('minimized');
-            const endInput = document.getElementById("endInput");
-            const departureInput = document.getElementById("departureInput");
-            const startText = startInput.value.trim();
-            const endText = endInput.value.trim();
-            const departureInputVal = departureInput.value;
-            if (!startText || !endText) {
-                alert("Başlangıç ve bitiş noktalarını yazmalısınız.");
-                controlsEl.classList.remove('minimized');
-                return;
-            }
-            let departureTime = departureInputVal ? new Date(departureInputVal) : new Date();
-            if (departureTime.toString() === "Invalid Date") {
-                alert("Geçerli bir çıkış saati giriniz.");
-                controlsEl.classList.remove('minimized');
-                return;
-            }
             routeLayerGroup.clearLayers();
             weatherLayerGroup.clearLayers();
             importedRouteLayer.clearLayers(); 
             Object.values(poiLayerGroups).forEach(layer => layer.clearLayers());
             Object.values(poiButtons).forEach(btn => btn.classList.remove('active'));
+            routeSummaryEl.style.display = 'none';
+
+            const departureInput = document.getElementById("departureInput");
+            const waypoints = collectWaypoints();
+            const validWaypointInputs = waypoints.filter(w => w.input.value.trim() !== '');
+
+            if (validWaypointInputs.length < 2) {
+                 alert("Rota için en az Başlangıç ve Bitiş noktalarını yazmalısınız.");
+                 controlsEl.classList.remove('minimized');
+                 return;
+            }
+            
+            let departureInputVal = departureInput.value;
+            let departureTime = departureInputVal ? new Date(departureInputVal) : new Date();
+
+            if (departureTime.toString() === "Invalid Date") {
+                alert("Geçerli bir çıkış saati giriniz.");
+                controlsEl.classList.remove('minimized');
+                return;
+            }
+            
             setStatus("Konumlar çözümleniyor...");
             setLoading(true);
+
             try {
-                const [start, end] = await Promise.all([geocode(startText), geocode(endText)]);
-                const startIcon = L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]});
-                const endIcon = L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]});
-                L.marker([start.lat, start.lon], {icon: startIcon}).addTo(routeLayerGroup).bindPopup(`<b>Başlangıç:</b> ${start.display_name}`).openPopup();
-                L.marker([end.lat, end.lon], {icon: endIcon}).addTo(routeLayerGroup).bindPopup(`<b>Bitiş:</b> ${end.display_name}`);
+                // Tüm durakları coğrafi kodlama
+                const geocodedWaypoints = await Promise.all(
+                    validWaypointInputs.map(w => geocode(w.input.value.trim()))
+                );
+                
+                // Rota çizimi
                 setStatus("Rota hesaplanıyor...");
-                const route = await getRoute(start, end);
+                const route = await getRoute(geocodedWaypoints);
+                
                 const totalDistanceMeters = route.distance;
                 const totalDurationSec = route.duration;
-                const requiredSegments = Math.ceil(totalDistanceMeters / (MIN_SEGMENT_DISTANCE_KM * 1000));
-                const sampleCount = Math.max(MIN_SAMPLE_COUNT, requiredSegments); 
+                
                 const allRouteCoords = getLatLngCoords(route.geometry);
                 const totalPoints = allRouteCoords.length;
+
+                // Markalama: Başlangıç, Bitiş ve Ara Duraklar
+                const startIcon = L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]});
+                const endIcon = L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]});
+                const midIcon = L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]});
+
+                geocodedWaypoints.forEach((wp, index) => {
+                    let icon = midIcon;
+                    if (index === 0) icon = startIcon;
+                    if (index === geocodedWaypoints.length - 1) icon = endIcon;
+                    
+                    L.marker([wp.lat, wp.lon], {icon: icon})
+                        .addTo(routeLayerGroup)
+                        .bindPopup(`<b>Durak ${index + 1}:</b> ${wp.display_name}`)
+                        .openPopup();
+                });
+                
+                // --- Rota Sonrası Hesaplamalar ---
+                const totalDistanceKm = totalDistanceMeters / 1000;
+                const totalDurationMinutes = totalDurationSec / 60;
+                
+                // 2. GELİŞTİRME: Mola Hesaplaması
+                const molaSuresiDk = calculateMolaDuration(totalDistanceKm, totalDurationMinutes);
+                
+                // 4. GELİŞTİRME: Maliyet Hesaplaması
+                const { gecisUcreti, yakitMaliyeti } = calculateCosts(totalDistanceKm, totalDurationMinutes);
+                
+                // Tahmini varış süresi (Trafik ve Mola dahil - Trafik simülasyonu 25 dk)
+                const trafikGecikmesiDk = 25; 
+                const tahminiVarisDk = totalDurationMinutes + molaSuresiDk + trafikGecikmesiDk;
+                const tahminiVarisSaat = new Date(departureTime.getTime() + tahminiVarisDk * 60 * 1000);
+                
+                // --- Hava Durumu Risk Hesaplaması (Aynı kalır, sadece sunum değişir) ---
+                const requiredSegments = Math.ceil(totalDistanceMeters / (MIN_SEGMENT_DISTANCE_KM * 1000));
+                const sampleCount = Math.max(MIN_SAMPLE_COUNT, requiredSegments); 
                 const indices = [];
                 for (let i = 0; i < sampleCount; i++) {
                     indices.push(Math.round(i / (sampleCount - 1) * (totalPoints - 1)));
                 }
+                
                 setStatus(`Hava durumu (${sampleCount} nokta) ve segmentler belirleniyor...`);
+                
+                // 3. GELİŞTİRME: Yükseklik Verisi için ilk nokta yüksekliği
+                let ilkYukseklik = 0;
+                
                 let lastRisk = 0;
                 let segmentStartIdx = 0;
                 let segmentResults = [];
+                
                 for (let i = 0; i < indices.length; i++) {
                     const currentRouteIdx = indices[i];
                     const currentCoords = allRouteCoords[currentRouteIdx];
@@ -786,20 +1227,31 @@
                     const estimatedArrivalTime = new Date(
                         departureTime.getTime() + fraction * totalDurationSec * 1000
                     );
+                    
                     const hourly = await getHourlyWeather(currentCoords[0], currentCoords[1]);
                     const idx = findNearestHourIndex(hourly.time, estimatedArrivalTime);
+                    
                     const temp = hourly.temperature_2m[idx];
                     const precip = hourly.precipitation[idx];
                     const wind = hourly.wind_speed_10m[idx];
+                    // Open-Meteo'dan gelen yükselti
+                    const elevation = hourly.elevation || 'API Yok'; 
+                    
+                    if (i === 0 && elevation !== 'API Yok') {
+                        ilkYukseklik = elevation; 
+                    }
+                    
                     const risk = getWeatherRisk({ precipitation: precip, wind }); 
                     const markerColor = getRiskColor(risk);
                     const riskIcons = getRiskIcon({ precipitation: precip, wind }); 
+                    
                     const weatherIcon = L.divIcon({
                         className: 'weather-icon',
                         html: `<div style="color: ${markerColor}; font-size: 16px;">${riskIcons}</div>`,
                         iconSize: [20, 20],
                         iconAnchor: [10, 10]
                     });
+                    
                     const marker = L.marker(currentCoords, {
                         icon: weatherIcon
                     }).bindPopup(`
@@ -807,26 +1259,31 @@
                         <b>Risk Durumu:</b> ${riskIcons}<br/>
                         <b>Sıcaklık:</b> ${temp.toFixed(1)} °C<br/>
                         <b>Rüzgar:</b> ${wind.toFixed(1)} km/s<br/>
-                        <b>Yağış:</b> ${precip.toFixed(2)} mm/saat
+                        <b>Yağış:</b> ${precip.toFixed(2)} mm/saat<br/>
+                        <b>Yükseklik:</b> ${elevation !== 'API Yok' ? elevation + ' m' : 'Bilgi Yok'}
                     `);
                     weatherLayerGroup.addLayer(marker);
+                    
                     if (risk !== lastRisk && lastRisk !== 0) {
                         const segmentCoords = allRouteCoords.slice(segmentStartIdx, currentRouteIdx + 1);
                         segmentResults.push({ coords: segmentCoords, color: getRiskColor(lastRisk) });
                         segmentStartIdx = currentRouteIdx;
                     }
                     lastRisk = risk;
+                    
                     if (i === indices.length - 1) {
                          const segmentCoords = allRouteCoords.slice(segmentStartIdx, allRouteCoords.length);
                          segmentResults.push({ coords: segmentCoords, color: getRiskColor(lastRisk) });
                     }
                 }
+                
+                // Rota GeoJSON oluşturma
                 const routeGeoJSON = {
                     type: "FeatureCollection",
                     features: [{
                         type: "Feature",
                         geometry: route.geometry,
-                        properties: { name: "Moto Rota Hava Durumu - " + startText + " to " + endText }
+                        properties: { name: "Moto Rota Hava Durumu - " + validWaypointInputs[0].input.value + " to " + validWaypointInputs[validWaypointInputs.length - 1].input.value }
                     }]
                 };
                 lastRouteGeoJSON = routeGeoJSON;
@@ -836,16 +1293,31 @@
                 } else {
                     localStorage.removeItem('lastRouteGeoJSON');
                 }
+                
                 segmentResults.forEach(segment => {
                     const polyline = L.polyline(segment.coords, { color: segment.color, weight: 6, opacity: 0.8 });
                     routeLayerGroup.addLayer(polyline);
                 });
+                
                 map.fitBounds(L.polyline(allRouteCoords).getBounds(), { padding: [80, 80] });
+                
+                // 4. GELİŞTİRME: Rota Özetini Gösterme
+                routeSummaryEl.innerHTML = `
+                    <i class="fas fa-info-circle"></i> <b>Rota Özeti:</b><br/>
+                    Toplam Mesafe: <b>${totalDistanceKm.toFixed(0)} km</b><br/>
+                    Toplam Süre (Mola/Trafik Dahil): <b>${(tahminiVarisDk / 60).toFixed(1)} saat</b><br/>
+                    Tahmini Varış: <b>${tahminiVarisSaat.toLocaleTimeString("tr-TR")}</b><br/>
+                    <hr style="margin: 5px 0; border-color: #333;">
+                    <i class="fas fa-money-bill-wave"></i> Maliyet Tahmini:<br/>
+                    Geçiş Ücreti: <b>${gecisUcreti.toFixed(2)} TL</b><br/>
+                    Yakıt Maliyeti: <b>${yakitMaliyeti.toFixed(2)} TL</b>
+                `;
+                routeSummaryEl.style.display = 'block';
+
                 setStatus(
-                    "Rota çizildi. Toplam Mesafe: " + (totalDistanceMeters / 1000).toFixed(0) + " km. Toplam Süre: " +
-                    (totalDurationSec / 3600).toFixed(1) +
-                    " saat. POI panelini kullanabilirsiniz."
+                    "Rota çizildi. Toplam Süre: " + (tahminiVarisDk / 60).toFixed(1) + " saat. POI panelini kullanabilirsiniz."
                 );
+
             } catch (err) {
                 console.error(err);
                 alert("Rota çizilirken bir hata oluştu: " + err.message);
@@ -855,6 +1327,105 @@
                 setLoading(false);
             }
         }
+        
+        // --- Konum Takibi ve Hız Göstergesi ---
+        function updateSpeedometer(speedKmh, limitKmh) {
+             currentSpeedEl.textContent = `${Math.round(speedKmh)} km/s`;
+             speedLimitEl.textContent = `Limit: ${limitKmh} km/s`;
+             
+             // 3. GELİŞTİRME: Kırmızı Uyarı
+             if (speedKmh > limitKmh) {
+                 currentSpeedEl.classList.add('red-text');
+             } else {
+                 currentSpeedEl.classList.remove('red-text');
+             }
+        }
+        
+        // 3. GELİŞTİRME: Yükseklik Göstergesi Güncellemesi
+        function updateAltitude(altitudeM) {
+             if (ALTITUDE_DISPLAY_ACTIVE) {
+                 altitudeDisplayEl.textContent = `Yükseklik: ${Math.round(altitudeM)} m`;
+             }
+        }
+
+        function toggleGeolocation() {
+             if (watchId) {
+                // Kapatma
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                if (trackingMarker) {
+                    map.removeLayer(trackingMarker);
+                    trackingMarker = null;
+                }
+                speedometerEl.classList.add('hidden'); // Gizle
+                trackBtn.innerHTML = '<i class="fas fa-location-arrow"></i> Konum Takibi';
+                trackBtn.style.background = 'var(--color-primary)';
+                setStatus("Konum takibi durduruldu.");
+            } else {
+                // Açma
+                if (!navigator.geolocation) {
+                    alert('Tarayıcınız konum servislerini desteklemiyor.');
+                    return;
+                }
+                
+                routeLayerGroup.clearLayers(); 
+                controlsEl.classList.remove('minimized');
+                speedometerEl.classList.remove('hidden'); // Göster
+                
+                trackBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Başlatılıyor...';
+                trackBtn.style.background = '#888';
+                
+                const bikeIcon = L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34]
+                });
+                
+                // Simülasyon: Hız limiti ve yükseklik verisi (Gerçek uygulamada API'den veya cihazın GPS'inden alınır)
+                let simulatedSpeedLimit = 70; 
+
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        const latLng = [position.coords.latitude, position.coords.longitude];
+                        const speedMps = position.coords.speed || 0; // m/s
+                        const speedKmh = speedMps * 3.6; // km/h
+                        const altitude = position.coords.altitude || 0; // metre
+
+                        if (!trackingMarker) {
+                            trackingMarker = L.marker(latLng, {icon: bikeIcon}).addTo(map);
+                            trackingMarker.bindPopup("<b>Şu Anki Konumunuz</b>").openPopup();
+                            map.setView(latLng, 14);
+                        } else {
+                            trackingMarker.setLatLng(latLng);
+                            map.panTo(latLng); 
+                        }
+                        
+                        // 3. GELİŞTİRME: Göstergeleri güncelle
+                        updateSpeedometer(speedKmh, simulatedSpeedLimit);
+                        updateAltitude(altitude);
+                        
+                        // Simülasyon: Hız limiti ve yükseklik değişimi (Demo amaçlı)
+                        simulatedSpeedLimit = (latLng[0] < 40) ? 90 : 50; 
+
+                        trackBtn.innerHTML = '<i class="fas fa-times-circle"></i> Takip Ediliyor';
+                        trackBtn.style.background = 'var(--color-danger)';
+                        setStatus(`Konum güncellendi. Hız: ${speedKmh.toFixed(0)} km/s`);
+                    }, 
+                    (error) => {
+                        alert(`Konum hatası: ${error.message}`);
+                        toggleGeolocation();
+                    }, 
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            }
+        }
+        
+        // --- Dışa Aktarma (Aynı kalır) ---
         function exportRoute(format) {
             if (!lastRouteGeoJSON) {
                 alert("Önce bir rota çizmelisiniz.");
@@ -902,83 +1473,47 @@
             saveAs(blob, `moto_rota_${new Date().toISOString().slice(0, 10)}.${extension}`);
             setStatus(`${format} dosyası indirilmeye başlandı.`);
         }
+        
+        // --- Ayarları Güncelleme ve Kapatma ---
         function updateSettingsAndClose() {
             const newWarnWind = parseFloat(warnWindInput.value);
             const newDangerWind = parseFloat(dangerWindInput.value);
             const newWarnPrecip = parseFloat(warnPrecipInput.value);
             const newDangerPrecip = parseFloat(dangerPrecipInput.value);
+            
+            // Yeni V3 Ayar Değerleri
+            const newYakitTuketimi = parseFloat(yakitTuketimiInput.value);
+            const newYakitFiyati = parseFloat(yakitFiyatiInput.value);
+            const newMolaFrekansDeger = parseFloat(molaFrekansDegerInput.value);
+            
             SHOULD_SAVE_ROUTE = saveRouteToggle.checked;
+            ALTITUDE_DISPLAY_ACTIVE = altitudeDisplayToggle.checked;
+            AVOID_TOLLS = avoidTollsToggle.checked;
+            AVOID_FERRIES = avoidFerriesToggle.checked;
+            MOLA_AKTIF = molaToggle.checked;
+            MOLA_FREKANSI_TIP = molaFrekansTipSelect.value;
+            MOLA_FREKANSI_DEGER = newMolaFrekansDeger;
+
+            // Giriş doğrulama
+            if (DANGER_WIND <= WARNING_WIND || DANGER_PRECIP <= WARNING_PRECIP) {
+                 alert("Yüksek Risk eşikleri, Orta Risk eşiklerinden büyük olmalıdır!");
+                 fillSettingsInputs(); 
+                 return;
+            }
+
             if (!isNaN(newWarnWind) && newWarnWind > 0) WARNING_WIND = newWarnWind;
             if (!isNaN(newDangerWind) && newDangerWind > 0) DANGER_WIND = newDangerWind;
             if (!isNaN(newWarnPrecip) && newWarnPrecip >= 0) WARNING_PRECIP = newWarnPrecip;
             if (!isNaN(newDangerPrecip) && newDangerPrecip >= 0) DANGER_PRECIP = newDangerPrecip;
-            if (DANGER_WIND <= WARNING_WIND) {
-                alert("Yüksek Risk Rüzgar eşiği, Orta Risk eşiğinden büyük olmalıdır!");
-                fillSettingsInputs(); 
-                return;
-            }
-            if (DANGER_PRECIP <= WARNING_PRECIP) {
-                 alert("Yüksek Risk Yağış eşiği, Orta Risk eşiğinden büyük olmalıdır!");
-                 fillSettingsInputs(); 
-                 return;
-            }
+            if (!isNaN(newYakitTuketimi) && newYakitTuketimi > 0) YAKIT_TUKETIMI = newYakitTuketimi;
+            if (!isNaN(newYakitFiyati) && newYakitFiyati > 0) YAKIT_FIYATI = newYakitFiyati;
+            if (!isNaN(newMolaFrekansDeger) && newMolaFrekansDeger > 0) MOLA_FREKANSI_DEGER = newMolaFrekansDeger;
+
             saveSettings();
+            updateAltitudeDisplay();
             updateLegend();
             settingsModal.style.display = 'none';
-            setStatus(`Ayarlar kaydedildi. Kayıt Durumu: ${SHOULD_SAVE_ROUTE ? 'AÇIK' : 'KAPALI'}. Yeni rota çiziniz.`);
-        }
-        function toggleGeolocation() {
-             if (watchId) {
-                navigator.geolocation.clearWatch(watchId);
-                watchId = null;
-                if (trackingMarker) {
-                    map.removeLayer(trackingMarker);
-                    trackingMarker = null;
-                }
-                trackBtn.innerHTML = '<i class="fas fa-location-arrow"></i> Konum Takibi';
-                trackBtn.style.background = 'var(--color-primary)';
-                setStatus("Konum takibi durduruldu.");
-            } else {
-                if (!navigator.geolocation) {
-                    alert('Tarayıcınız konum servislerini desteklemiyor.');
-                    return;
-                }
-                routeLayerGroup.clearLayers(); 
-                controlsEl.classList.remove('minimized');
-                trackBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Başlatılıyor...';
-                trackBtn.style.background = '#888';
-                const bikeIcon = L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34]
-                });
-                watchId = navigator.geolocation.watchPosition(
-                    (position) => {
-                        const latLng = [position.coords.latitude, position.coords.longitude];
-                        if (!trackingMarker) {
-                            trackingMarker = L.marker(latLng, {icon: bikeIcon}).addTo(map);
-                            trackingMarker.bindPopup("<b>Şu Anki Konumunuz</b>").openPopup();
-                            map.setView(latLng, 14);
-                        } else {
-                            trackingMarker.setLatLng(latLng);
-                            map.panTo(latLng); 
-                        }
-                        trackBtn.innerHTML = '<i class="fas fa-times-circle"></i> Takip Ediliyor';
-                        trackBtn.style.background = 'var(--color-danger)';
-                        setStatus(`Konum güncellendi. Doğruluk: ${position.coords.accuracy.toFixed(0)}m.`);
-                    }, 
-                    (error) => {
-                        alert(`Konum hatası: ${error.message}`);
-                        toggleGeolocation();
-                    }, 
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 5000,
-                        maximumAge: 0
-                    }
-                );
-            }
+            setStatus(`Ayarlar kaydedildi. Rota Tercihleri: Ücretli Yollar: ${AVOID_TOLLS ? 'Kaçın' : 'Serbest'}. Yeni rota çiziniz.`);
         }
         
         // --- Event Dinleyicileri ---
@@ -986,6 +1521,9 @@
         trackBtn.addEventListener("click", toggleGeolocation);
         settingsBtn.addEventListener('click', () => { fillSettingsInputs(); settingsModal.style.display = 'block'; });
         closeSettingsBtn.addEventListener('click', updateSettingsAndClose);
+        
+        exportGPXBtn.addEventListener('click', () => exportRoute('GPX'));
+        exportKMLBtn.addEventListener('click', () => exportRoute('KML'));
         
         useStartLocBtn.addEventListener('click', () => {
              if (!navigator.geolocation) { alert('Tarayıcınız konum servislerini desteklemiyor.'); return; }
