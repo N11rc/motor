@@ -24,6 +24,7 @@
             padding: 0;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             overflow: hidden; 
+            transition: background 0.3s; /* Tema geçişi için */
         }
 
         :root {
@@ -36,61 +37,18 @@
             --color-info: #00bcd4;
         }
 
-        /* YENİ: LIGHT THEME DESTEĞİ */
-        body.light-theme {
-            --color-bg: #fff;
+        /* YENİ: AÇIK TEMA TANIMLARI */
+        .light-theme {
+            --color-bg: #f4f4f4;
             --color-text: #333;
-            --color-primary: #1e88e5; 
-            --color-danger: #f44336;
-            --color-warning: #ff9800;
-            --color-success: #4caf50;
-            --color-info: #00bcd4;
+            --color-primary: #007bff;
+            --color-danger: #dc3545;
+            --color-warning: #ffc107;
+            --color-success: #28a745;
+            --color-info: #17a2b8;
+            background-color: var(--color-bg); /* body background */
         }
 
-        body.light-theme #controls, 
-        body.light-theme #mapToggleBtn, 
-        body.light-theme #poiControls {
-            background: rgba(255, 255, 255, 0.95);
-            color: var(--color-text);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
-        }
-        
-        body.light-theme #controls input {
-            background: #f0f0f0; 
-            border: 1px solid #ddd;
-            color: var(--color-text);
-        }
-        
-        body.light-theme .setting-group {
-             background: #f8f8f8;
-        }
-        
-        body.light-theme #settingsModal {
-            background: rgba(255, 255, 255, 0.95);
-            color: var(--color-text);
-        }
-        
-        body.light-theme #settingsModal h2 {
-             border-bottom: 1px solid #ddd;
-        }
-        
-        body.light-theme .setting-item {
-             border-bottom: 1px dashed #eee;
-        }
-        
-        body.light-theme .setting-item input[type="number"] {
-            background: #fff;
-        }
-        
-        /* Popup'lar için tema geçişi */
-        .leaflet-popup-content-wrapper { 
-            background: var(--color-bg); 
-            color: var(--color-text); 
-            transition: background 0.3s, color 0.3s;
-        }
-        .leaflet-popup-tip { background: var(--color-bg); transition: background 0.3s; }
-        
-        /* Geri kalan CSS aynı kalır */
         * { box-sizing: border-box; }
 
         /* KONTROL ÇUBUĞU */
@@ -98,8 +56,12 @@
             position: absolute; top: 0; left: 0; right: 0; padding: 10px; background: var(--color-bg);
             color: var(--color-text); display: flex; flex-direction: column; gap: 10px; z-index: 1000;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); 
-            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out, background 0.3s;
             max-height: 250px; overflow: hidden; width: 100%; 
+        }
+        .light-theme #controls {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
         }
 
         #controls.minimized { max-height: 100px; padding-bottom: 5px; } 
@@ -137,6 +99,12 @@
             padding: 8px 10px;
             border-radius: 4px;
         }
+        .light-theme #controls input { 
+            background: #fff; 
+            border: 1px solid #ccc;
+            color: var(--color-text);
+        }
+        
         #controls-buttons { 
             display: flex; gap: 10px; width: 100%; 
         }
@@ -180,14 +148,25 @@
             flex-direction: column;
             gap: 8px;
         }
-        
-        /* Mobil Cihazlar İçin Pozisyon Ayarı */
-        @media (max-width: 768px) {
-            /* Üst Kontrol Çubuğunun minimum yüksekliği yaklaşık 100px */
-            #mapToggleBtn { top: 110px; } /* Üst çubuğun altına it */
-            #poiControls { top: 160px; } /* Map Toggle'ın altına it */
-            .leaflet-top.leaflet-right { top: 250px !important; } /* Leaflet zoom kontrolünü daha da aşağı it */
+        .light-theme #mapToggleBtn, .light-theme #poiControls {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--color-text);
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
         }
+        
+        /* Mobil Cihazlar İçin Pozisyon Ayarı (İstek 3 Düzeltmesi) */
+        @media (max-width: 768px) {
+            /* Kontrol çubuğu tam açıkken (max 250px) altına gelmesi için güvenli değerler */
+            #mapToggleBtn { top: 260px; } 
+            #poiControls { top: 310px; } 
+            .leaflet-top.leaflet-right { top: 360px !important; } /* Leaflet zoom kontrolünü daha da aşağı it */
+        }
+        /* Minimized durumu: Kontrol çubuğu küçüldüğünde butonları yukarı çek */
+        @media (max-width: 768px) {
+            #controls.minimized ~ #mapToggleBtn { top: 110px; } /* Minimized yükseklik ~100px + 10px boşluk */
+            #controls.minimized ~ #poiControls { top: 160px; } 
+        }
+
         @media (min-width: 769px) {
              #mapToggleBtn { top: 10px; } 
              #poiControls { top: 60px; }
@@ -210,6 +189,12 @@
             background: var(--color-info); 
             border-color: var(--color-info); 
         }
+        .light-theme .poi-button {
+            background: #eee;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        .light-theme .poi-button:hover { background: #ddd; }
 
         #poiControls { display: none; padding: 10px 15px; } /* Başlangıçta gizli */
 
@@ -223,12 +208,22 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.95);
             color: var(--color-text); z-index: 1001; display: none; padding: 20px; overflow-y: auto; box-sizing: border-box;
         }
+        .light-theme #settingsModal {
+            background: rgba(255, 255, 255, 0.98);
+            color: var(--color-text);
+        }
         
         #settingsModal h2 { border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; }
+        .light-theme #settingsModal h2 { border-bottom: 1px solid #ccc; }
+        
         #settingsModal .close-button { position: absolute; top: 10px; right: 20px; font-size: 24px; cursor: pointer; }
         
         .setting-group {
             margin-bottom: 25px; padding: 10px; background: #222; border-radius: 8px;
+        }
+        .light-theme .setting-group {
+            background: #fff;
+            border: 1px solid #ddd;
         }
 
         .setting-item {
@@ -236,9 +231,12 @@
         }
         .setting-item:last-child { border-bottom: none; }
         .setting-item label { flex-grow: 1; }
-        .setting-item input[type="number"] {
+        .setting-item input[type="number"], .setting-item input[type="text"][disabled] {
             width: 70px; background: #333; border: none; color: var(--color-text);
             padding: 5px; border-radius: 4px; text-align: right;
+        }
+        .light-theme .setting-item input[type="number"], .light-theme .setting-item input[type="text"][disabled] {
+             background: #eee;
         }
         
         .switch {
@@ -268,8 +266,7 @@
         .file-controls button:hover { background: #777; }
     </style>
 </head>
-<body>
-    <div id="controls">
+<body class="dark-theme"> <div id="controls">
         <div id="controls-inputs">
             <label>Başlangıç:
                 <input id="startInput" type="text" placeholder="Örn: Pendik, İstanbul" />
@@ -310,9 +307,9 @@
         <h2><i class="fas fa-cog"></i> Uygulama Ayarları</h2>
         
         <div class="setting-group">
-            <h3><i class="fas fa-palette"></i> Tema Ayarları</h3>
+            <h3><i class="fas fa-palette"></i> Görünüm Ayarları</h3>
             <div class="setting-item">
-                <label for="themeToggle">Koyu Tema Kullan</label>
+                <label for="themeToggle">Açık Tema Kullan</label>
                 <label class="switch">
                     <input type="checkbox" id="themeToggle">
                     <span class="slider round"></span>
@@ -321,14 +318,10 @@
         </div>
         
         <div class="setting-group">
-            <h3><i class="fas fa-mug-hot"></i> Mola Zamanlayıcısı</h3>
+            <h3><i class="fas fa-road"></i> Rota Optimizasyonu (Geliştirme Aşamasında)</h3>
             <div class="setting-item">
-                <label for="breakIntervalHours">Her kaç saat sürüş sonrası mola verilsin:</label>
-                <input type="number" id="breakIntervalHours" min="1" max="10" />
-            </div>
-            <div class="setting-item">
-                <label for="breakDurationMin">Mola Süresi (dakika):</label>
-                <input type="number" id="breakDurationMin" min="1" max="180" />
+                <label for="stopoverInputSetting" style="opacity: 0.7;">Mola Noktası (Çoklu Rota Desteği)</label>
+                <input id="stopoverInputSetting" type="text" placeholder="Örn: Eskişehir, Türkiye" disabled title="Çoklu rota desteği henüz aktif değildir.">
             </div>
         </div>
         
@@ -399,18 +392,16 @@
         let DANGER_PRECIP = 2; 
         let WARNING_PRECIP = 0.1; 
         let SHOULD_SAVE_ROUTE = false;
-        let BREAK_DURATION_MIN = 30; // YENİ: Mola süresi (dakika)
-        let BREAK_INTERVAL_HOURS = 2; // YENİ: Mola aralığı (saat)
+        let IS_LIGHT_THEME = false; // YENİ TEMA DEĞİŞKENİ
         
         const MIN_SEGMENT_DISTANCE_KM = 10; 
         const MIN_SAMPLE_COUNT = 10; 
-        const POI_SEARCH_BUFFER_KM = 2; 
+        const POI_SEARCH_BUFFER_KM = 5; // İSTEK 4: POI arama tamponu 2'den 5'e çıkarıldı
 
         // --- Global Değişkenler ---
         let lastRouteGeoJSON = null; 
         let importedRouteLayer = L.layerGroup(); 
         let currentMapType = 'osm'; 
-        let currentTheme = 'dark'; // YENİ: Tema değişkeni
         
         // Yeni POI Katmanları
         const poiLayerGroups = {
@@ -451,12 +442,7 @@
         const warnPrecipInput = document.getElementById('warnPrecip');
         const dangerPrecipInput = document.getElementById('dangerPrecip');
         const saveRouteToggle = document.getElementById('saveRouteToggle');
-        
-        // YENİ INPUTLAR
-        const themeToggle = document.getElementById('themeToggle'); 
-        const breakDurationMinInput = document.getElementById('breakDurationMin'); 
-        const breakIntervalHoursInput = document.getElementById('breakIntervalHours'); 
-        
+        const themeToggle = document.getElementById('themeToggle'); // YENİ: TEMA TOGGLE
         const exportGPXBtn = document.getElementById('exportGPXBtn');
         const exportKMLBtn = document.getElementById('exportKMLBtn');
         const importFile = document.getElementById('importFile');
@@ -472,17 +458,6 @@
         const startInput = document.getElementById("startInput");
         let trackingMarker = null;
         let watchId = null; 
-        
-        // YENİ: TEMA FONKSİYONU
-        function applyTheme(theme) {
-            if (theme === 'light') {
-                document.body.classList.add('light-theme');
-                currentTheme = 'light';
-            } else {
-                document.body.classList.remove('light-theme');
-                currentTheme = 'dark';
-            }
-        }
 
 
         // --- YEREL DEPOLAMA ve İLK YÜKLEME ---
@@ -494,15 +469,11 @@
                 DANGER_PRECIP = settings.dangerPrecip || DANGER_PRECIP;
                 WARNING_PRECIP = settings.warnPrecip || WARNING_PRECIP;
                 SHOULD_SAVE_ROUTE = settings.shouldSaveRoute || false;
-                
-                // YENİ AYARLARIN YÜKLENMESİ
-                currentTheme = settings.theme || 'dark';
-                BREAK_DURATION_MIN = settings.breakDurationMin || BREAK_DURATION_MIN;
-                BREAK_INTERVAL_HOURS = settings.breakIntervalHours || BREAK_INTERVAL_HOURS;
+                IS_LIGHT_THEME = settings.isLightTheme || false; // YENİ: Tema ayarı yüklendi
             }
             
             fillSettingsInputs();
-            applyTheme(currentTheme); // Yüklü temayı uygula
+            updateTheme(); // YENİ: Tema ayarı uygulandı
             
             if (SHOULD_SAVE_ROUTE) {
                 const lastRoute = localStorage.getItem('lastRouteGeoJSON');
@@ -526,14 +497,21 @@
                 dangerWind: DANGER_WIND,
                 warnPrecip: WARNING_PRECIP,
                 dangerPrecip: DANGER_PRECIP,
-                shouldSaveRoute: SHOULD_SAVE_ROUTE,
-                
-                // YENİ AYARLARIN KAYDEDİLMESİ
-                theme: currentTheme,
-                breakDurationMin: BREAK_DURATION_MIN,
-                breakIntervalHours: BREAK_INTERVAL_HOURS,
+                shouldSaveRoute: SHOULD_SAVE_ROUTE, 
+                isLightTheme: IS_LIGHT_THEME // YENİ: Tema ayarı kaydedildi
             };
             localStorage.setItem('motoAppSettings', JSON.stringify(settings));
+        }
+
+        // YENİ: Tema Güncelleme İşlevi
+        function updateTheme() {
+            if (IS_LIGHT_THEME) {
+                document.body.classList.add('light-theme');
+                themeToggle.checked = true;
+            } else {
+                document.body.classList.remove('light-theme');
+                themeToggle.checked = false;
+            }
         }
 
         function updateExportButtons() {
@@ -568,11 +546,7 @@
             warnPrecipInput.value = WARNING_PRECIP;
             dangerPrecipInput.value = DANGER_PRECIP;
             saveRouteToggle.checked = SHOULD_SAVE_ROUTE;
-            
-            // YENİ INPUTLARIN DOLDURULMASI
-            themeToggle.checked = currentTheme === 'dark'; 
-            breakDurationMinInput.value = BREAK_DURATION_MIN;
-            breakIntervalHoursInput.value = BREAK_INTERVAL_HOURS;
+            themeToggle.checked = IS_LIGHT_THEME; // YENİ
         }
 
         function setInitialMapView() {
@@ -584,7 +558,7 @@
                     },
                     (err) => {
                         map.setView([39.0, 35.0], 6); 
-                        setStatus("Harita hazır. Başlangıç ve bitiş giriniz. Konum erişimi hatası: " + err.message);
+                        setStatus("Harita hazır. Başlangıç ve bitiş giriniz.");
                     },
                     { enableHighAccuracy: false, timeout: 5000 }
                 );
@@ -616,12 +590,13 @@
         }
         document.getElementById('mapToggleBtn').addEventListener('click', toggleMapLayer);
 
-        // --- POI ARAMA İŞLEVLERİ (Aynı kalır) ---
+        // --- POI ARAMA İŞLEVLERİ ---
         function buildOverpassQuery(poiType, routeGeoJSON, bufferKm) {
             if (!routeGeoJSON || !routeGeoJSON.features || routeGeoJSON.features.length === 0) return null;
 
             const coords = routeGeoJSON.features[0].geometry.coordinates;
-            const points = coords.filter((_, i) => i % 10 === 0 || i === coords.length - 1);
+            // İSTEK 4: Örnekleme sıklığı 10'da birden 5'te bire düşürüldü
+            const points = coords.filter((_, i) => i % 5 === 0 || i === coords.length - 1); 
 
             let query = `[out:json][timeout:30];\n`;
             
@@ -771,7 +746,7 @@
         clearBtn.addEventListener('click', clearMapAndResetControls);
 
 
-        // --- DİĞER FONKSİYONLAR (Aynı kalır) ---
+        // --- DİĞER FONKSİYONLAR ---
         function setStatus(msg) { statusEl.textContent = msg || ""; }
         function setLoading(loading) {
             routeBtn.disabled = loading;
@@ -853,6 +828,15 @@
             const startText = startInput.value.trim();
             const endText = endInput.value.trim();
             const departureInputVal = departureInput.value;
+
+            // Mola özelliği için yer tutucu uyarısı
+            const stopoverInputSetting = document.getElementById('stopoverInputSetting');
+            if (stopoverInputSetting && stopoverInputSetting.value.trim()) {
+                 alert("Çoklu nokta (Mola) rota desteği şu anda mevcut değildir. Lütfen sadece Başlangıç ve Bitiş noktalarını kullanın.");
+                 controlsEl.classList.remove('minimized');
+                 return;
+            }
+            
             if (!startText || !endText) {
                 alert("Başlangıç ve bitiş noktalarını yazmalısınız.");
                 controlsEl.classList.remove('minimized');
@@ -880,17 +864,7 @@
                 setStatus("Rota hesaplanıyor...");
                 const route = await getRoute(start, end);
                 const totalDistanceMeters = route.distance;
-                const totalDurationSec = route.duration; // Sadece sürüş süresi
-                
-                // YENİ: MOLA ZAMANI HESAPLAMA
-                const breakIntervalSec = BREAK_INTERVAL_HOURS * 3600;
-                const breakDurationSec = BREAK_DURATION_MIN * 60;
-                
-                // Toplam sürüş süresi içinde kaç mola ekleneceğini hesapla (sadece sürüş süresine göre)
-                const numBreaks = Math.floor(totalDurationSec / breakIntervalSec); 
-                const totalBreakTimeSec = numBreaks * breakDurationSec;
-                const totalTimeSec = totalDurationSec + totalBreakTimeSec; // Toplam seyahat süresi (sürüş + mola)
-                
+                const totalDurationSec = route.duration;
                 const requiredSegments = Math.ceil(totalDistanceMeters / (MIN_SEGMENT_DISTANCE_KM * 1000));
                 const sampleCount = Math.max(MIN_SAMPLE_COUNT, requiredSegments); 
                 const allRouteCoords = getLatLngCoords(route.geometry);
@@ -907,21 +881,9 @@
                     const currentRouteIdx = indices[i];
                     const currentCoords = allRouteCoords[currentRouteIdx];
                     const fraction = currentRouteIdx / (totalPoints - 1); 
-                    
-                    // Bu noktaya kadar geçen tahmini SÜRÜŞ süresi (saniye)
-                    const drivingTimeElapsed = fraction * totalDurationSec; 
-                    
-                    // Bu noktaya kadar eklenen mola sayısı ve toplam mola süresi
-                    const breaksAdded = Math.floor(drivingTimeElapsed / breakIntervalSec);
-                    const breakTimeAdded = breaksAdded * breakDurationSec;
-                    
-                    // Toplam geçen süre (sürüş + mola)
-                    const totalTimeElapsed = drivingTimeElapsed + breakTimeAdded;
-
                     const estimatedArrivalTime = new Date(
-                        departureTime.getTime() + totalTimeElapsed * 1000
+                        departureTime.getTime() + fraction * totalDurationSec * 1000
                     );
-                    
                     const hourly = await getHourlyWeather(currentCoords[0], currentCoords[1]);
                     const idx = findNearestHourIndex(hourly.time, estimatedArrivalTime);
                     const temp = hourly.temperature_2m[idx];
@@ -978,9 +940,9 @@
                 });
                 map.fitBounds(L.polyline(allRouteCoords).getBounds(), { padding: [80, 80] });
                 setStatus(
-                    "Rota çizildi. Toplam Mesafe: " + (totalDistanceMeters / 1000).toFixed(0) + " km. Toplam Süre (Molalar Dahil): " +
-                    (totalTimeSec / 3600).toFixed(1) +
-                    " saat (" + (totalBreakTimeSec / 60).toFixed(0) + " dakika mola dahil). POI panelini kullanabilirsiniz."
+                    "Rota çizildi. Toplam Mesafe: " + (totalDistanceMeters / 1000).toFixed(0) + " km. Toplam Süre: " +
+                    (totalDurationSec / 3600).toFixed(1) +
+                    " saat. POI panelini kullanabilirsiniz."
                 );
             } catch (err) {
                 console.error(err);
@@ -1044,19 +1006,12 @@
             const newWarnPrecip = parseFloat(warnPrecipInput.value);
             const newDangerPrecip = parseFloat(dangerPrecipInput.value);
             SHOULD_SAVE_ROUTE = saveRouteToggle.checked;
-            
-            // YENİ MOLA AYARLARI
-            const newBreakDurationMin = parseFloat(breakDurationMinInput.value);
-            const newBreakIntervalHours = parseFloat(breakIntervalHoursInput.value);
+            IS_LIGHT_THEME = themeToggle.checked; // YENİ: Tema ayarı
             
             if (!isNaN(newWarnWind) && newWarnWind > 0) WARNING_WIND = newWarnWind;
             if (!isNaN(newDangerWind) && newDangerWind > 0) DANGER_WIND = newDangerWind;
             if (!isNaN(newWarnPrecip) && newWarnPrecip >= 0) WARNING_PRECIP = newWarnPrecip;
             if (!isNaN(newDangerPrecip) && newDangerPrecip >= 0) DANGER_PRECIP = newDangerPrecip;
-            
-            // YENİ MOLA AYARLARI VALIDASYONU
-            if (!isNaN(newBreakDurationMin) && newBreakDurationMin > 0) BREAK_DURATION_MIN = newBreakDurationMin;
-            if (!isNaN(newBreakIntervalHours) && newBreakIntervalHours >= 1) BREAK_INTERVAL_HOURS = newBreakIntervalHours;
             
             if (DANGER_WIND <= WARNING_WIND) {
                 alert("Yüksek Risk Rüzgar eşiği, Orta Risk eşiğinden büyük olmalıdır!");
@@ -1069,14 +1024,11 @@
                  return;
             }
             
-            // TEMA AYARINI GÜNCELLE VE UYGULA
-            currentTheme = themeToggle.checked ? 'dark' : 'light';
-            applyTheme(currentTheme);
-            
             saveSettings();
             updateLegend();
+            updateTheme(); // YENİ: Tema güncellendi
             settingsModal.style.display = 'none';
-            setStatus(`Ayarlar kaydedildi. Tema: ${currentTheme === 'dark' ? 'Koyu' : 'Açık'}. Yeni rota çiziniz.`);
+            setStatus(`Ayarlar kaydedildi. Tema: ${IS_LIGHT_THEME ? 'Açık' : 'Koyu'}. Yeni rota çiziniz.`);
         }
         function toggleGeolocation() {
              if (watchId) {
@@ -1137,12 +1089,6 @@
         trackBtn.addEventListener("click", toggleGeolocation);
         settingsBtn.addEventListener('click', () => { fillSettingsInputs(); settingsModal.style.display = 'block'; });
         closeSettingsBtn.addEventListener('click', updateSettingsAndClose);
-        
-        // YENİ: TEMA TOGGLE ÖNİZLEME
-        themeToggle.addEventListener('change', () => {
-             // Ayarları kaydetmeden anlık tema önizlemesi
-            applyTheme(themeToggle.checked ? 'dark' : 'light');
-        });
         
         useStartLocBtn.addEventListener('click', () => {
              if (!navigator.geolocation) { alert('Tarayıcınız konum servislerini desteklemiyor.'); return; }
@@ -1227,6 +1173,9 @@
             importBtn.disabled = true;
             importFile.value = ''; 
         });
+        
+        exportGPXBtn.addEventListener('click', () => exportRoute('GPX'));
+        exportKMLBtn.addEventListener('click', () => exportRoute('KML'));
     </script>
 </body>
 </html>
